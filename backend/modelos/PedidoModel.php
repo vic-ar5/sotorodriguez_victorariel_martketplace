@@ -28,7 +28,7 @@ class PedidoModel
             return null;
         }
 
-        $idCarrito = (new CarritoModel())->activo($idUsuario);
+        $idCarrito = (new CarritoModel())->ConsultarCarritoActivo($idUsuario);
 
         if ($idCarrito === null || !$this->CarritoTieneProductos($idCarrito)) {
             return null;

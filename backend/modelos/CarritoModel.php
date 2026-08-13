@@ -16,7 +16,10 @@ class CarritoModel
         $this->db = Flight::db();
     }
 
-    public function activo(int $idUsuario): ?int
+    /**
+     * Busca el carrito en estado 'activo' del usuario; null si no existe.
+     */
+    public function ConsultarCarritoActivo(int $idUsuario): ?int
     {
         $sql = "SELECT id_carrito FROM carrito
                 WHERE id_usuario = :id_usuario AND estado = 'activo'";
@@ -29,7 +32,7 @@ class CarritoModel
         return $id === false ? null : (int) $id;
     }
 
-    public function crear(int $idUsuario): int
+    public function CrearCarrito(int $idUsuario): int
     {
         $sql = "INSERT INTO carrito (id_usuario)
                 VALUES (:id_usuario)
@@ -45,7 +48,7 @@ class CarritoModel
      * Agrega un producto al carrito activo (crea el carrito si no existe).
      * Devuelve el id del carrito o null si el producto no está activo.
      */
-    public function agregar(int $idUsuario, int $idProducto, int $cantidad): ?int
+    public function AgregarProductoAlCarrito(int $idUsuario, int $idProducto, int $cantidad): ?int
     {
         $precio = (new ProductoModel())->ConsultarPrecioDelProducto($idProducto);
 
@@ -53,10 +56,10 @@ class CarritoModel
             return null;
         }
 
-        $idCarrito = $this->activo($idUsuario);
+        $idCarrito = $this->ConsultarCarritoActivo($idUsuario);
 
         if ($idCarrito === null) {
-            $idCarrito = $this->crear($idUsuario);
+            $idCarrito = $this->CrearCarrito($idUsuario);
         }
 
         $sql = "INSERT INTO detalle_carrito (id_carrito, id_producto, cantidad, precio_unitario)
@@ -75,9 +78,9 @@ class CarritoModel
         return $idCarrito;
     }
 
-    public function modificarCantidad(int $idUsuario, int $idProducto, int $cantidad): bool
+    public function ModificarCantidadDelProducto(int $idUsuario, int $idProducto, int $cantidad): bool
     {
-        $idCarrito = $this->activo($idUsuario);
+        $idCarrito = $this->ConsultarCarritoActivo($idUsuario);
 
         if ($idCarrito === null) {
             return false;
@@ -97,9 +100,9 @@ class CarritoModel
         return $stmt->rowCount() > 0;
     }
 
-    public function eliminar(int $idUsuario, int $idProducto): bool
+    public function EliminarProductoDelCarrito(int $idUsuario, int $idProducto): bool
     {
-        $idCarrito = $this->activo($idUsuario);
+        $idCarrito = $this->ConsultarCarritoActivo($idUsuario);
 
         if ($idCarrito === null) {
             return false;
@@ -117,7 +120,10 @@ class CarritoModel
         return $stmt->rowCount() > 0;
     }
 
-    public function ver(int $idCarrito): array
+    /**
+     * Detalle del carrito con sus productos y el total.
+     */
+    public function ConsultarDetallesDelCarrito(int $idCarrito): array
     {
         $sql = "SELECT dc.id_detalle_carrito,
                        dc.id_producto,

@@ -22,14 +22,14 @@ class CarritoController
     {
         $usuario = AuthGuard::requireRol('comprador');
 
-        $idCarrito = $this->modelo->activo((int) $usuario['sub']);
+        $idCarrito = $this->modelo->ConsultarCarritoActivo((int) $usuario['sub']);
 
         if ($idCarrito === null) {
             Flight::json(['id_carrito' => null, 'items' => [], 'total' => 0]);
             Flight::stop();
         }
 
-        Flight::json($this->modelo->ver($idCarrito));
+        Flight::json($this->modelo->ConsultarDetallesDelCarrito($idCarrito));
     }
 
     public function agregar(): void
@@ -49,7 +49,7 @@ class CarritoController
             Flight::stop();
         }
 
-        $idCarrito = $this->modelo->agregar((int) $usuario['sub'], $idProducto, $cantidad);
+        $idCarrito = $this->modelo->AgregarProductoAlCarrito((int) $usuario['sub'], $idProducto, $cantidad);
 
         if ($idCarrito === null) {
             Flight::json(['error' => 'Producto no disponible'], 404);
@@ -71,7 +71,7 @@ class CarritoController
             Flight::stop();
         }
 
-        if (!$this->modelo->modificarCantidad((int) $usuario['sub'], $idProducto, $cantidad)) {
+        if (!$this->modelo->ModificarCantidadDelProducto((int) $usuario['sub'], $idProducto, $cantidad)) {
             Flight::json(['error' => 'El producto no está en tu carrito'], 404);
             Flight::stop();
         }
@@ -85,7 +85,7 @@ class CarritoController
 
         $idProducto = (int) Http::param('id');
 
-        if (!$this->modelo->eliminar((int) $usuario['sub'], $idProducto)) {
+        if (!$this->modelo->EliminarProductoDelCarrito((int) $usuario['sub'], $idProducto)) {
             Flight::json(['error' => 'El producto no está en tu carrito'], 404);
             Flight::stop();
         }
