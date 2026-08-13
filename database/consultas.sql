@@ -192,9 +192,10 @@ WHERE c.id_usuario = :id_usuario AND c.estado = 'activo'
 GROUP BY c.id_usuario;
 
 -- 8b. Copiar el detalle al pedido (currval = id del pedido recién insertado)
-INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario, subtotal)
+-- NOTA: subtotal es GENERATED ALWAYS, no se inserta.
+INSERT INTO detalle_pedido (id_pedido, id_producto, cantidad, precio_unitario)
 SELECT currval('pedidos_id_pedido_seq'),
-       dc.id_producto, dc.cantidad, dc.precio_unitario, dc.subtotal
+       dc.id_producto, dc.cantidad, dc.precio_unitario
 FROM detalle_carrito dc
 JOIN carrito c ON dc.id_carrito = c.id_carrito
 WHERE c.id_usuario = :id_usuario AND c.estado = 'activo';
