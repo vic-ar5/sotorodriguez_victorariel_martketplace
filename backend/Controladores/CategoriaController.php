@@ -23,13 +23,13 @@ class CategoriaController
      */
     public function index(): void
     {
-        Flight::json($this->modelo->index(true));
+        Flight::json($this->modelo->ConsultarCategorias(true));
     }
 
     public function adminIndex(): void
     {
         AuthGuard::requireRol('administrador');
-        Flight::json($this->modelo->index(false));
+        Flight::json($this->modelo->ConsultarCategorias(false));
     }
 
     public function crear(): void
@@ -43,7 +43,7 @@ class CategoriaController
             Flight::stop();
         }
 
-        $idCategoria = $this->modelo->crear($datos);
+        $idCategoria = $this->modelo->RegistrarCategoria($datos);
         Flight::json(['mensaje' => 'Categoría creada', 'id_categoria' => $idCategoria], 201);
     }
 
@@ -54,7 +54,7 @@ class CategoriaController
         $idCategoria = (int) Http::param('id');
         $datos = Http::bodyTodo();
 
-        if (!$this->modelo->actualizar($idCategoria, $datos)) {
+        if (!$this->modelo->ModificarCategoria($idCategoria, $datos)) {
             Flight::json(['error' => 'Categoría no encontrada'], 404);
             Flight::stop();
         }
@@ -69,7 +69,7 @@ class CategoriaController
         $idCategoria = (int) Http::param('id');
         $activo = Http::esVerdadero(Http::body('activo'));
 
-        if (!$this->modelo->cambiarEstado($idCategoria, $activo)) {
+        if (!$this->modelo->CambiarEstadoDeCategoria($idCategoria, $activo)) {
             Flight::json(['error' => 'Categoría no encontrada'], 404);
             Flight::stop();
         }

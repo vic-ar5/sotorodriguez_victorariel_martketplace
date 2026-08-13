@@ -16,7 +16,11 @@ class CategoriaModel
         $this->db = Flight::db();
     }
 
-    public function index(bool $soloActivas = true): array
+    /**
+     * Consulta de categorías. $soloActivas = false devuelve también las inactivas
+     * (uso administrativo).
+     */
+    public function ConsultarCategorias(bool $soloActivas = true): array
     {
         $sql = "SELECT id_categoria, nombre, descripcion, activo
                 FROM categorias";
@@ -32,7 +36,7 @@ class CategoriaModel
         return $stmt->fetchAll();
     }
 
-    public function crear(array $datos): int
+    public function RegistrarCategoria(array $datos): int
     {
         $sql = "INSERT INTO categorias (nombre, descripcion)
                 VALUES (:nombre, :descripcion)
@@ -47,7 +51,7 @@ class CategoriaModel
         return (int) $stmt->fetchColumn();
     }
 
-    public function actualizar(int $idCategoria, array $datos): bool
+    public function ModificarCategoria(int $idCategoria, array $datos): bool
     {
         $sql = "UPDATE categorias
                 SET nombre      = :nombre,
@@ -64,7 +68,7 @@ class CategoriaModel
         return $stmt->rowCount() > 0;
     }
 
-    public function cambiarEstado(int $idCategoria, bool $activo): bool
+    public function CambiarEstadoDeCategoria(int $idCategoria, bool $activo): bool
     {
         $sql = "UPDATE categorias SET activo = :activo WHERE id_categoria = :id_categoria";
 
