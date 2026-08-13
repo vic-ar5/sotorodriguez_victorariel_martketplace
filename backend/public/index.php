@@ -2,9 +2,6 @@
 
 declare(strict_types=1);
 
-use PDO;
-use Flight;
-
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 function cargarEnv(string $archivo): void
@@ -54,11 +51,14 @@ Flight::register('db', PDO::class, [
     ],
 ]);
 
+Flight::set('flight.v2.output_buffering', true);
+
 Flight::before('start', function () {
     Flight::response()
         ->header('Access-Control-Allow-Origin', '*')
         ->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
-        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        ->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With')
+        ->header('Connection', 'close');
 
     if (Flight::request()->method === 'OPTIONS') {
         Flight::response()->status(204)->send();
