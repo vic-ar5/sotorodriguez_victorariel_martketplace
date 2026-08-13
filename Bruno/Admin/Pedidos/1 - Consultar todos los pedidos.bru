@@ -1,0 +1,15 @@
+meta {
+  name: Consultar todos los pedidos
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/admin/pedidos
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}

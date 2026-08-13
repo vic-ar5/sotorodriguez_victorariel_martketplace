@@ -1,0 +1,22 @@
+meta {
+  name: Actualizar categoria
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/api/admin/categorias/{{idCategoria}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "nombre": "Computo",
+    "descripcion": "Equipos de computo y accesorios actualizados"
+  }
+}

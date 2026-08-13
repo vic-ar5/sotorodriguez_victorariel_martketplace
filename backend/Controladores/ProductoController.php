@@ -75,7 +75,7 @@ class ProductoController
         AuthGuard::requireRol('administrador');
 
         $datos = Http::bodyTodo();
-        $requeridos = ['id_vendedor', 'id_categoria', 'nombre', 'precio'];
+        $requeridos = ['identificador', 'id_vendedor', 'id_categoria', 'nombre', 'precio'];
         $faltantes = [];
 
         foreach ($requeridos as $campo) {

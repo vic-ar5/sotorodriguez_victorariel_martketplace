@@ -1,0 +1,15 @@
+meta {
+  name: Consultar productos por estado
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/admin/productos?estado=inactivo
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}

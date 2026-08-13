@@ -1,0 +1,15 @@
+meta {
+  name: Eliminar producto del carrito
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/carrito/items/{{idProducto}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenComprador}}
+}

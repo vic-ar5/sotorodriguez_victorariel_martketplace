@@ -1,0 +1,15 @@
+meta {
+  name: Consultar usuarios por estado
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/admin/usuarios?activo=0
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}

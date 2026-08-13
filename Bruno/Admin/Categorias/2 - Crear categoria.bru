@@ -1,0 +1,22 @@
+meta {
+  name: Crear categoria
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/admin/categorias
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "nombre": "Mascotas",
+    "descripcion": "Productos y accesorios para mascotas"
+  }
+}

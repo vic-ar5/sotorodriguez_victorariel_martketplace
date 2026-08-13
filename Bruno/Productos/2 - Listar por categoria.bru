@@ -1,0 +1,11 @@
+meta {
+  name: Listar por categoria
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/productos?id_categoria={{idCategoria}}
+  body: none
+  auth: none
+}

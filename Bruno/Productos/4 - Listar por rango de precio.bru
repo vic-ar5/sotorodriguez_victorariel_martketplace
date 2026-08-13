@@ -1,0 +1,11 @@
+meta {
+  name: Listar por rango de precio
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/productos?precio_min=500&precio_max=2000
+  body: none
+  auth: none
+}

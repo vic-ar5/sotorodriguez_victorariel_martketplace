@@ -1,0 +1,22 @@
+meta {
+  name: Agregar producto al carrito
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/carrito/items
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenComprador}}
+}
+
+body:json {
+  {
+    "id_producto": 10,
+    "cantidad": 1
+  }
+}

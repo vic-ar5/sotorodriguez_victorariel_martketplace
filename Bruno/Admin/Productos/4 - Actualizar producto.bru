@@ -1,0 +1,22 @@
+meta {
+  name: Actualizar producto
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/admin/productos/{{idProducto}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "precio": 1499.00,
+    "existencia": 15
+  }
+}

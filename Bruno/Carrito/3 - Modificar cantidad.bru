@@ -1,0 +1,21 @@
+meta {
+  name: Modificar cantidad
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/carrito/items/{{idProducto}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenComprador}}
+}
+
+body:json {
+  {
+    "cantidad": 3
+  }
+}

@@ -184,18 +184,19 @@ class ProductoModel
 
         try {
             $sql = "INSERT INTO productos
-                        (id_vendedor, id_categoria, nombre, descripcion, precio, existencia, estado)
-                    VALUES (:id_vendedor, :id_categoria, :nombre, :descripcion, :precio, :existencia, 'activo')
+                        (identificador, id_vendedor, id_categoria, nombre, descripcion, precio, existencia, estado)
+                    VALUES (:identificador, :id_vendedor, :id_categoria, :nombre, :descripcion, :precio, :existencia, 'activo')
                     RETURNING id_producto";
 
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
-                'id_vendedor'  => (int) $datos['id_vendedor'],
-                'id_categoria' => (int) $datos['id_categoria'],
-                'nombre'       => trim($datos['nombre']),
-                'descripcion'  => trim((string) ($datos['descripcion'] ?? '')),
-                'precio'       => (float) $datos['precio'],
-                'existencia'   => (int) ($datos['existencia'] ?? 0),
+                'identificador'  => trim($datos['identificador']),
+                'id_vendedor'    => (int) $datos['id_vendedor'],
+                'id_categoria'   => (int) $datos['id_categoria'],
+                'nombre'         => trim($datos['nombre']),
+                'descripcion'    => trim((string) ($datos['descripcion'] ?? '')),
+                'precio'         => (float) $datos['precio'],
+                'existencia'     => (int) ($datos['existencia'] ?? 0),
             ]);
 
             $idProducto = (int) $stmt->fetchColumn();

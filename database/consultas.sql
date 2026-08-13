@@ -242,8 +242,8 @@ WHERE dp.id_pedido = :id_pedido;
 -- ---------------------------------------------------------------------
 -- 10. Registrar producto (y su imagen en Google Drive)
 -- ---------------------------------------------------------------------
-INSERT INTO productos (id_vendedor, id_categoria, nombre, descripcion, precio, existencia)
-VALUES (:id_vendedor, :id_categoria, :nombre, :descripcion, :precio, :existencia)
+INSERT INTO productos (identificador, id_vendedor, id_categoria, nombre, descripcion, precio, existencia)
+VALUES (:identificador, :id_vendedor, :id_categoria, :nombre, :descripcion, :precio, :existencia)
 RETURNING id_producto;
 
 INSERT INTO imagenes (id_producto, nombre_archivo, ruta_drive, url_publica, es_principal)
