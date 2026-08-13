@@ -30,15 +30,24 @@ function cargarEnv(string $archivo): void
 
 cargarEnv(dirname(__DIR__, 2) . '/.env');
 
-Flight::register('db', PDO::class, [
-    sprintf(
-        '%s:host=%s;dbname=%s;charset=utf8mb4',
-        getenv('DB_CONNECTION') ?: 'mysql',
+$dsn = getenv('DB_CONNECTION') === 'pgsql'
+    ? sprintf(
+        'pgsql:host=%s;port=%s;dbname=%s',
         getenv('DB_HOST') ?: 'localhost',
+        getenv('DB_PORT') ?: '5432',
         getenv('DB_NAME') ?: 'marketplace',
-    ),
-    getenv('DB_USER') ?: 'root',
-    getenv('DB_PASS') ?: '',
+    )
+    : sprintf(
+        'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+        getenv('DB_HOST') ?: 'localhost',
+        getenv('DB_PORT') ?: '3306',
+        getenv('DB_NAME') ?: 'marketplace',
+    );
+
+Flight::register('db', PDO::class, [
+    $dsn,
+    getenv('DB_USER') ?: 'postgres',
+    getenv('DB_PASS') ?: '1234',
     [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
