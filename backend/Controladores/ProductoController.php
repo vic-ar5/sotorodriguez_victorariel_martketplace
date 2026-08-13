@@ -19,27 +19,48 @@ class ProductoController
     }
 
     /**
-     * Catálogo público con filtros combinados.
-     * ?id_categoria=&precio_min=&precio_max=&nombre=&disponibilidad=&orden=
+     * Catálogo público. Cada filtro del query string se despacha a su
+     * propia consulta; sin filtros se devuelve el catálogo completo.
+     * ?id_categoria=&precio_min=&precio_max=&nombre=&disponibilidad=
      */
     public function index(): void
     {
-        $filtros = [
-            'id_categoria'   => Http::query('id_categoria'),
-            'precio_min'     => Http::query('precio_min'),
-            'precio_max'     => Http::query('precio_max'),
-            'nombre'         => Http::query('nombre'),
-            'disponibilidad' => Http::query('disponibilidad'),
-            'orden'          => Http::query('orden'),
-        ];
+        $idCategoria = Http::query('id_categoria');
+        $precioMin = Http::query('precio_min');
+        $precioMax = Http::query('precio_max');
+        $nombre = Http::query('nombre');
+        $disponibilidad = Http::query('disponibilidad');
 
-        Flight::json($this->modelo->index($filtros));
+        if ($idCategoria !== null && $idCategoria !== '') {
+            Flight::json($this->modelo->ConsultarPorCategoria((int) $idCategoria));
+            Flight::stop();
+        }
+
+        if (($precioMin !== null && $precioMin !== '') || ($precioMax !== null && $precioMax !== '')) {
+            Flight::json($this->modelo->ConsultarPorRangoDePrecio(
+                $precioMin !== null && $precioMin !== '' ? (float) $precioMin : null,
+                $precioMax !== null && $precioMax !== '' ? (float) $precioMax : null,
+            ));
+            Flight::stop();
+        }
+
+        if ($nombre !== null && $nombre !== '') {
+            Flight::json($this->modelo->ConsultarPorNombre($nombre));
+            Flight::stop();
+        }
+
+        if ($disponibilidad === 'disponible' || $disponibilidad === 'agotado') {
+            Flight::json($this->modelo->ConsultarPorDisponibilidad($disponibilidad));
+            Flight::stop();
+        }
+
+        Flight::json($this->modelo->ConsultaProductos());
     }
 
     public function show(): void
     {
         $idProducto = (int) Http::param('id');
-        $producto = $this->modelo->mostrar($idProducto);
+        $producto = $this->modelo->DetallesProducto($idProducto);
 
         if ($producto === null) {
             Flight::json(['error' => 'Producto no encontrado'], 404);
@@ -73,7 +94,7 @@ class ProductoController
             Flight::stop();
         }
 
-        $idProducto = $this->modelo->crear($datos);
+        $idProducto = $this->modelo->RegistrarProducto($datos);
         Flight::json(['mensaje' => 'Producto creado', 'id_producto' => $idProducto], 201);
     }
 
@@ -84,7 +105,7 @@ class ProductoController
         $idProducto = (int) Http::param('id');
         $datos = Http::bodyTodo();
 
-        if (!$this->modelo->actualizar($idProducto, $datos)) {
+        if (!$this->modelo->ModificarProducto($idProducto, $datos)) {
             Flight::json(['error' => 'No se pudo actualizar: sin campos válidos o producto inexistente'], 422);
             Flight::stop();
         }
@@ -104,7 +125,7 @@ class ProductoController
             Flight::stop();
         }
 
-        if (!$this->modelo->cambiarEstado($idProducto, $estado)) {
+        if (!$this->modelo->CambiarEstadoDelProducto($idProducto, $estado)) {
             Flight::json(['error' => 'Producto no encontrado'], 404);
             Flight::stop();
         }
@@ -121,6 +142,6 @@ class ProductoController
         AuthGuard::requireRol('administrador');
 
         $estado = Http::query('estado');
-        Flight::json($this->modelo->adminIndex($estado === null ? null : (string) $estado));
+        Flight::json($this->modelo->ConsultarTodosLosProductos($estado === null ? null : (string) $estado));
     }
 }

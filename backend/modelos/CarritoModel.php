@@ -47,7 +47,7 @@ class CarritoModel
      */
     public function agregar(int $idUsuario, int $idProducto, int $cantidad): ?int
     {
-        $precio = (new ProductoModel())->precio($idProducto);
+        $precio = (new ProductoModel())->ConsultarPrecioDelProducto($idProducto);
 
         if ($precio === null) {
             return null;
