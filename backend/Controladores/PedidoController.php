@@ -32,7 +32,7 @@ class PedidoController
             Flight::stop();
         }
 
-        $idPedido = $this->modelo->generar((int) $usuario['sub'], $idDireccion);
+        $idPedido = $this->modelo->GenerarPedido((int) $usuario['sub'], $idDireccion);
 
         if ($idPedido === null) {
             Flight::json(['error' => 'El carrito está vacío o la dirección no es válida'], 422);
@@ -45,7 +45,7 @@ class PedidoController
     public function mios(): void
     {
         $usuario = AuthGuard::requireRol('comprador');
-        Flight::json($this->modelo->mios((int) $usuario['sub']));
+        Flight::json($this->modelo->ConsultarPedidosDelComprador((int) $usuario['sub']));
     }
 
     public function detallePropio(): void
@@ -53,7 +53,7 @@ class PedidoController
         $usuario = AuthGuard::requireRol('comprador');
 
         $idPedido = (int) Http::param('id');
-        $pedido = $this->modelo->detalleDeUsuario((int) $usuario['sub'], $idPedido);
+        $pedido = $this->modelo->ConsultarDetalleDePedidoDelComprador((int) $usuario['sub'], $idPedido);
 
         if ($pedido === null) {
             Flight::json(['error' => 'Pedido no encontrado'], 404);
@@ -74,7 +74,7 @@ class PedidoController
             $idEstado = (int) $estado;
         }
 
-        Flight::json($this->modelo->todos($idEstado));
+        Flight::json($this->modelo->ConsultarTodosLosPedidos($idEstado));
     }
 
     public function cambiarEstado(): void
@@ -89,7 +89,7 @@ class PedidoController
             Flight::stop();
         }
 
-        if (!$this->modelo->cambiarEstado($idPedido, $idEstado)) {
+        if (!$this->modelo->ActualizarEstadoDelPedido($idPedido, $idEstado)) {
             Flight::json(['error' => 'Pedido no encontrado'], 404);
             Flight::stop();
         }
