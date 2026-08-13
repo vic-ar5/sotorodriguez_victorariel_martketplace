@@ -31,24 +31,24 @@ class AuthGuard
 
         if ($token === null) {
             Flight::json(['error' => 'No autorizado'], 401);
-            Flight::stop();
+            exit;
         }
 
         $payload = JwtHelper::verificar($token);
 
         if ($payload === null) {
             Flight::json(['error' => 'Token inválido o expirado'], 401);
-            Flight::stop();
+            exit;
         }
 
         if (($payload['rol'] ?? null) !== $rol) {
             Flight::json(['error' => 'Acceso denegado para este rol'], 403);
-            Flight::stop();
+            exit;
         }
 
         if (($payload['activo'] ?? false) !== true) {
             Flight::json(['error' => 'Usuario inactivo'], 403);
-            Flight::stop();
+            exit;
         }
 
         return $payload;

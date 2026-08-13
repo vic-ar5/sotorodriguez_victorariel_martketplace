@@ -62,7 +62,7 @@ Flight::before('start', function () {
 
     if (Flight::request()->method === 'OPTIONS') {
         Flight::response()->status(204)->send();
-        Flight::stop();
+        exit;
     }
 });
 

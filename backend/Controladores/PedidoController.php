@@ -29,14 +29,14 @@ class PedidoController
 
         if ($idDireccion < 1) {
             Flight::json(['error' => 'id_direccion es obligatorio'], 422);
-            Flight::stop();
+            return;
         }
 
         $idPedido = $this->modelo->GenerarPedido((int) $usuario['sub'], $idDireccion);
 
         if ($idPedido === null) {
             Flight::json(['error' => 'El carrito está vacío o la dirección no es válida'], 422);
-            Flight::stop();
+            return;
         }
 
         Flight::json(['mensaje' => 'Pedido generado', 'id_pedido' => $idPedido], 201);
@@ -57,7 +57,7 @@ class PedidoController
 
         if ($pedido === null) {
             Flight::json(['error' => 'Pedido no encontrado'], 404);
-            Flight::stop();
+            return;
         }
 
         Flight::json($pedido);
@@ -86,12 +86,12 @@ class PedidoController
 
         if ($idEstado < 1 || $idEstado > 6) {
             Flight::json(['error' => 'id_estado_pedido inválido (1 a 6)'], 422);
-            Flight::stop();
+            return;
         }
 
         if (!$this->modelo->ActualizarEstadoDelPedido($idPedido, $idEstado)) {
             Flight::json(['error' => 'Pedido no encontrado'], 404);
-            Flight::stop();
+            return;
         }
 
         Flight::json(['mensaje' => 'Estado del pedido actualizado']);

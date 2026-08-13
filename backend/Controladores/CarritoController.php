@@ -26,7 +26,7 @@ class CarritoController
 
         if ($idCarrito === null) {
             Flight::json(['id_carrito' => null, 'items' => [], 'total' => 0]);
-            Flight::stop();
+            return;
         }
 
         Flight::json($this->modelo->ConsultarDetallesDelCarrito($idCarrito));
@@ -41,19 +41,19 @@ class CarritoController
 
         if ($idProducto < 1) {
             Flight::json(['error' => 'id_producto es obligatorio'], 422);
-            Flight::stop();
+            return;
         }
 
         if ($cantidad < 1) {
             Flight::json(['error' => 'La cantidad debe ser al menos 1'], 422);
-            Flight::stop();
+            return;
         }
 
         $idCarrito = $this->modelo->AgregarProductoAlCarrito((int) $usuario['sub'], $idProducto, $cantidad);
 
         if ($idCarrito === null) {
             Flight::json(['error' => 'Producto no disponible'], 404);
-            Flight::stop();
+            return;
         }
 
         Flight::json(['mensaje' => 'Producto agregado al carrito', 'id_carrito' => $idCarrito], 201);
@@ -68,12 +68,12 @@ class CarritoController
 
         if ($cantidad < 1) {
             Flight::json(['error' => 'La cantidad debe ser al menos 1'], 422);
-            Flight::stop();
+            return;
         }
 
         if (!$this->modelo->ModificarCantidadDelProducto((int) $usuario['sub'], $idProducto, $cantidad)) {
             Flight::json(['error' => 'El producto no está en tu carrito'], 404);
-            Flight::stop();
+            return;
         }
 
         Flight::json(['mensaje' => 'Cantidad actualizada']);
@@ -87,7 +87,7 @@ class CarritoController
 
         if (!$this->modelo->EliminarProductoDelCarrito((int) $usuario['sub'], $idProducto)) {
             Flight::json(['error' => 'El producto no está en tu carrito'], 404);
-            Flight::stop();
+            return;
         }
 
         Flight::json(['mensaje' => 'Producto eliminado del carrito']);

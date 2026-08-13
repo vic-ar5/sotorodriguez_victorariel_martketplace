@@ -36,12 +36,12 @@ class AuthController
 
         if ($faltantes !== []) {
             Flight::json(['error' => 'Campos requeridos faltantes', 'campos' => $faltantes], 422);
-            Flight::stop();
+            return;
         }
 
         if (strlen($datos['contrasena']) < 8) {
             Flight::json(['error' => 'La contraseña debe tener al menos 8 caracteres'], 422);
-            Flight::stop();
+            return;
         }
 
         try {
@@ -53,7 +53,7 @@ class AuthController
             } else {
                 Flight::json(['error' => 'No se pudo registrar el usuario'], 500);
             }
-            Flight::stop();
+            return;
         }
     }
 
@@ -69,19 +69,19 @@ class AuthController
 
         if ($correo === '' || $contrasena === '') {
             Flight::json(['error' => 'Correo y contraseña son obligatorios'], 422);
-            Flight::stop();
+            return;
         }
 
         $usuario = $this->modelo->ConsultarUsuarioPorCorreo($correo);
 
         if ($usuario === null || !password_verify($contrasena, $usuario['contrasena_hash'])) {
             Flight::json(['error' => 'Correo o contraseña incorrectos'], 401);
-            Flight::stop();
+            return;
         }
 
         if (!self::boolActivo($usuario['activo'])) {
             Flight::json(['error' => 'Usuario inactivo'], 403);
-            Flight::stop();
+            return;
         }
 
         $token = JwtHelper::generar([

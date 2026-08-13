@@ -33,7 +33,7 @@ class ProductoController
 
         if ($idCategoria !== null && $idCategoria !== '') {
             Flight::json($this->modelo->ConsultarPorCategoria((int) $idCategoria));
-            Flight::stop();
+            return;
         }
 
         if (($precioMin !== null && $precioMin !== '') || ($precioMax !== null && $precioMax !== '')) {
@@ -41,17 +41,17 @@ class ProductoController
                 $precioMin !== null && $precioMin !== '' ? (float) $precioMin : null,
                 $precioMax !== null && $precioMax !== '' ? (float) $precioMax : null,
             ));
-            Flight::stop();
+            return;
         }
 
         if ($nombre !== null && $nombre !== '') {
             Flight::json($this->modelo->ConsultarPorNombre($nombre));
-            Flight::stop();
+            return;
         }
 
         if ($disponibilidad === 'disponible' || $disponibilidad === 'agotado') {
             Flight::json($this->modelo->ConsultarPorDisponibilidad($disponibilidad));
-            Flight::stop();
+            return;
         }
 
         Flight::json($this->modelo->ConsultaProductos());
@@ -64,7 +64,7 @@ class ProductoController
 
         if ($producto === null) {
             Flight::json(['error' => 'Producto no encontrado'], 404);
-            Flight::stop();
+            return;
         }
 
         Flight::json($producto);
@@ -86,12 +86,12 @@ class ProductoController
 
         if ($faltantes !== []) {
             Flight::json(['error' => 'Campos requeridos faltantes', 'campos' => $faltantes], 422);
-            Flight::stop();
+            return;
         }
 
         if ((float) $datos['precio'] < 0) {
             Flight::json(['error' => 'El precio no puede ser negativo'], 422);
-            Flight::stop();
+            return;
         }
 
         $idProducto = $this->modelo->RegistrarProducto($datos);
@@ -107,7 +107,7 @@ class ProductoController
 
         if (!$this->modelo->ModificarProducto($idProducto, $datos)) {
             Flight::json(['error' => 'No se pudo actualizar: sin campos válidos o producto inexistente'], 422);
-            Flight::stop();
+            return;
         }
 
         Flight::json(['mensaje' => 'Producto actualizado']);
@@ -122,12 +122,12 @@ class ProductoController
 
         if (!in_array($estado, ['activo', 'inactivo'], true)) {
             Flight::json(['error' => "El estado debe ser 'activo' o 'inactivo'"], 422);
-            Flight::stop();
+            return;
         }
 
         if (!$this->modelo->CambiarEstadoDelProducto($idProducto, $estado)) {
             Flight::json(['error' => 'Producto no encontrado'], 404);
-            Flight::stop();
+            return;
         }
 
         Flight::json(['mensaje' => "Producto $estado"]);

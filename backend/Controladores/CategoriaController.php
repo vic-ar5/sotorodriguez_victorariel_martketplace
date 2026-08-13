@@ -40,7 +40,7 @@ class CategoriaController
 
         if (trim((string) ($datos['nombre'] ?? '')) === '') {
             Flight::json(['error' => 'El nombre de la categoría es obligatorio'], 422);
-            Flight::stop();
+            return;
         }
 
         $idCategoria = $this->modelo->RegistrarCategoria($datos);
@@ -56,7 +56,7 @@ class CategoriaController
 
         if (!$this->modelo->ModificarCategoria($idCategoria, $datos)) {
             Flight::json(['error' => 'Categoría no encontrada'], 404);
-            Flight::stop();
+            return;
         }
 
         Flight::json(['mensaje' => 'Categoría actualizada']);
@@ -71,7 +71,7 @@ class CategoriaController
 
         if (!$this->modelo->CambiarEstadoDeCategoria($idCategoria, $activo)) {
             Flight::json(['error' => 'Categoría no encontrada'], 404);
-            Flight::stop();
+            return;
         }
 
         Flight::json(['mensaje' => $activo ? 'Categoría activada' : 'Categoría desactivada']);
