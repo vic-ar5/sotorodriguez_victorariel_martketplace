@@ -45,7 +45,7 @@ class AuthController
         }
 
         try {
-            $idUsuario = $this->modelo->registrar($datos);
+            $idUsuario = $this->modelo->RegistrarComprador($datos);
             Flight::json(['mensaje' => 'Registro exitoso', 'id_usuario' => $idUsuario], 201);
         } catch (PDOException $e) {
             if ($e->getCode() === '23505') {
@@ -72,7 +72,7 @@ class AuthController
             Flight::stop();
         }
 
-        $usuario = $this->modelo->porCorreo($correo);
+        $usuario = $this->modelo->ConsultarUsuarioPorCorreo($correo);
 
         if ($usuario === null || !password_verify($contrasena, $usuario['contrasena_hash'])) {
             Flight::json(['error' => 'Correo o contraseña incorrectos'], 401);

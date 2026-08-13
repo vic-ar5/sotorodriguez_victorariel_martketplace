@@ -20,7 +20,7 @@ class AuthModel
     /**
      * Registra un usuario con rol comprador y su persona asociada.
      */
-    public function registrar(array $datos): int
+    public function RegistrarComprador(array $datos): int
     {
         $this->db->beginTransaction();
 
@@ -61,7 +61,10 @@ class AuthModel
         }
     }
 
-    public function porCorreo(string $correo): ?array
+    /**
+     * Busca un usuario por su correo (usado para validar el login).
+     */
+    public function ConsultarUsuarioPorCorreo(string $correo): ?array
     {
         $sql = "SELECT u.id_usuario,
                        u.contrasena_hash,

@@ -19,7 +19,7 @@ class UsuarioModel
     /**
      * Consulta administrativa de usuarios. $activo = true/false/null (todos).
      */
-    public function index(?bool $activo): array
+    public function ConsultarTodosLosUsuarios(?bool $activo): array
     {
         $sql = "SELECT u.id_usuario,
                        u.nombre_usuario,

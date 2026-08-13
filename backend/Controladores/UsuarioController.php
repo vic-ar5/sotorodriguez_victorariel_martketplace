@@ -33,6 +33,6 @@ class UsuarioController
             $activo = Http::esVerdadero($activoParam);
         }
 
-        Flight::json($this->modelo->index($activo));
+        Flight::json($this->modelo->ConsultarTodosLosUsuarios($activo));
     }
 }
