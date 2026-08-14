@@ -51,12 +51,33 @@ class CarritoController
 
         $idCarrito = $this->modelo->AgregarProductoAlCarrito((int) $usuario['sub'], $idProducto, $cantidad);
 
-        if ($idCarrito === null) {
-            Flight::json(['error' => 'Producto no disponible'], 404);
+        if (!$idCarrito['ok']) {
+            if ($idCarrito['error'] === 'no_disponible') {
+                Flight::json(['error' => 'Producto no disponible'], 404);
+                return;
+            }
+
+            Flight::json([
+                'error'  => 'Superaste el stock del producto',
+                'stock'  => $idCarrito['stock'],
+                'maximo' => $idCarrito['maximo'],
+            ], 422);
             return;
         }
 
-        Flight::json(['mensaje' => 'Producto agregado al carrito', 'id_carrito' => $idCarrito], 201);
+        Flight::json(['mensaje' => 'Producto agregado al carrito', 'id_carrito' => $idCarrito['id_carrito']], 201);
+    }
+
+    public function vaciar(): void
+    {
+        $usuario = AuthGuard::requireRol('comprador');
+
+        if (!$this->modelo->VaciarCarrito((int) $usuario['sub'])) {
+            Flight::json(['error' => 'No hay un carrito activo'], 404);
+            return;
+        }
+
+        Flight::json(['mensaje' => 'Carrito cancelado']);
     }
 
     public function modificarCantidad(): void
@@ -66,18 +87,27 @@ class CarritoController
         $idProducto = (int) Http::param('id');
         $cantidad = (int) Http::body('cantidad', 0);
 
-        if ($cantidad < 1) {
-            Flight::json(['error' => 'La cantidad debe ser al menos 1'], 422);
-            return;
-        }
+        $resultado = $this->modelo->ModificarCantidadDelProducto(
+            (int) $usuario['sub'],
+            $idProducto,
+            $cantidad,
+        );
 
-        if (!$this->modelo->ModificarCantidadDelProducto((int) $usuario['sub'], $idProducto, $cantidad)) {
-            Flight::json([
-                'error'                => 'El producto no está en tu carrito',
-                'debug_id_producto'    => $idProducto,
-                'debug_id_usuario_sub' => (int) $usuario['sub'],
-                'debug_carrito_activo' => $this->modelo->ConsultarCarritoActivo((int) $usuario['sub']),
-            ], 404);
+        if (!$resultado['ok']) {
+            if ($resultado['error'] === 'cantidad_invalida') {
+                Flight::json(['error' => 'La cantidad debe ser al menos 1'], 422);
+                return;
+            }
+
+            if ($resultado['error'] === 'supera_stock') {
+                Flight::json([
+                    'error' => 'Superaste el stock del producto',
+                    'stock' => $resultado['stock'],
+                ], 422);
+                return;
+            }
+
+            Flight::json(['error' => 'El producto no está en tu carrito'], 404);
             return;
         }
 

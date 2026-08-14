@@ -35,7 +35,11 @@ class ProductoModel
                        p.moneda,
                        v.id_usuario      AS id_vendedor,
                        c.nombre          AS categoria,
-                       i.url_publica     AS imagen
+                       CASE 
+                           WHEN i.id_imagen IS NOT NULL 
+                           THEN '/api/imagenes/' || i.id_imagen
+                           ELSE NULL
+                       END AS imagen
                 FROM productos p
                 JOIN usuario v    ON p.id_vendedor = v.id_usuario
                 JOIN categorias c ON p.id_categoria = c.id_categoria
@@ -115,11 +119,63 @@ class ProductoModel
     }
 
     /**
+     * Catálogo público combinando varios filtros a la vez.
+     * $filtros admite: id_categoria, precio_min, precio_max, nombre,
+     * disponibilidad y orden (precio_asc | precio_desc).
+     */
+    public function ConsultarFiltrado(array $filtros): array
+    {
+        $condiciones = '';
+        $params = [];
+
+        if (isset($filtros['id_categoria']) && $filtros['id_categoria'] !== '') {
+            $condiciones .= " AND p.id_categoria = :id_categoria";
+            $params['id_categoria'] = (int) $filtros['id_categoria'];
+        }
+
+        if (isset($filtros['precio_min']) && $filtros['precio_min'] !== '') {
+            $condiciones .= " AND p.precio >= :precio_min";
+            $params['precio_min'] = (float) $filtros['precio_min'];
+        }
+
+        if (isset($filtros['precio_max']) && $filtros['precio_max'] !== '') {
+            $condiciones .= " AND p.precio <= :precio_max";
+            $params['precio_max'] = (float) $filtros['precio_max'];
+        }
+
+        if (isset($filtros['nombre']) && $filtros['nombre'] !== '') {
+            $condiciones .= " AND p.nombre ILIKE '%' || :nombre || '%'";
+            $params['nombre'] = $filtros['nombre'];
+        }
+
+        if (($filtros['disponibilidad'] ?? '') === 'disponible') {
+            $condiciones .= " AND p.existencia > 0";
+        } elseif (($filtros['disponibilidad'] ?? '') === 'agotado') {
+            $condiciones .= " AND p.existencia = 0";
+        }
+
+        $orden = 'p.nombre ASC';
+        $ordenFiltro = (string) ($filtros['orden'] ?? '');
+        if ($ordenFiltro === 'precio_asc') {
+            $orden = 'p.precio ASC';
+        } elseif ($ordenFiltro === 'precio_desc') {
+            $orden = 'p.precio DESC';
+        }
+
+        if ($condiciones === '' && $ordenFiltro === '') {
+            return $this->ConsultaProductos();
+        }
+
+        return $this->consultaBase($condiciones, $params, $orden);
+    }
+
+    /**
      * Detalle de un producto activo, incluyendo sus imágenes.
      */
     public function DetallesProducto(int $idProducto): ?array
     {
-        $sql = "SELECT p.id_producto, p.nombre, p.descripcion, p.precio, p.existencia, p.moneda,
+        $sql = "SELECT p.id_producto, p.identificador, p.nombre, p.descripcion, p.precio,
+                       p.existencia, p.moneda, p.estado,
                        p.fecha_registro, p.fecha_actualizacion,
                        c.nombre AS categoria,
                        v.nombre_usuario AS vendedor,
@@ -140,7 +196,106 @@ class ProductoModel
             return null;
         }
 
-        $sql = "SELECT id_imagen, nombre_archivo, ruta_drive, url_publica, es_principal
+        $sql = "SELECT id_imagen, nombre_archivo, ruta_drive, 
+                       '/api/imagenes/' || id_imagen AS url_publica, es_principal
+                FROM imagenes
+                WHERE id_producto = :id_producto
+                ORDER BY es_principal DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_producto' => $idProducto]);
+
+        $producto['imagenes'] = $stmt->fetchAll();
+
+        return $producto;
+    }
+
+    /**
+     * Resumen de los productos de un vendedor para el panel administrativo:
+     * total, disponibles, no disponibles y detalle por categoría.
+     */
+    public function ConsultarResumenDelVendedor(int $idVendedor): array
+    {
+        $sql = "SELECT COUNT(*) AS total,
+                       COUNT(*) FILTER (WHERE p.estado = 'activo' AND p.existencia > 0) AS disponibles,
+                       COUNT(*) FILTER (WHERE p.estado <> 'activo' OR p.existencia = 0) AS no_disponibles
+                FROM productos p
+                WHERE p.id_vendedor = :id_vendedor";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_vendedor' => $idVendedor]);
+
+        $resumen = $stmt->fetch();
+
+        $sql = "SELECT c.nombre AS categoria,
+                       COUNT(p.id_producto) AS total,
+                       COUNT(p.id_producto) FILTER (
+                           WHERE p.estado = 'activo' AND p.existencia > 0
+                       ) AS disponibles
+                FROM productos p
+                JOIN categorias c ON p.id_categoria = c.id_categoria
+                WHERE p.id_vendedor = :id_vendedor
+                GROUP BY c.nombre
+                ORDER BY c.nombre";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_vendedor' => $idVendedor]);
+
+        $resumen['por_categoria'] = $stmt->fetchAll();
+
+        return $resumen;
+    }
+
+    /**
+     * Productos de un vendedor (uso del panel administrativo), con su imagen
+     * principal. Incluye los inactivos.
+     */
+    public function ConsultarProductosDelVendedor(int $idVendedor): array
+    {
+        $sql = "SELECT p.id_producto, p.identificador, p.nombre, p.precio, p.existencia,
+                       p.moneda, p.estado, p.fecha_registro,
+                       c.nombre AS categoria,
+                       CASE 
+                           WHEN i.id_imagen IS NOT NULL 
+                           THEN '/api/imagenes/' || i.id_imagen
+                           ELSE NULL
+                       END AS imagen
+                FROM productos p
+                JOIN categorias c ON p.id_categoria = c.id_categoria
+                LEFT JOIN imagenes i ON i.id_producto = p.id_producto AND i.es_principal = TRUE
+                WHERE p.id_vendedor = :id_vendedor
+                ORDER BY p.nombre ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_vendedor' => $idVendedor]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Detalle de un producto de un vendedor (incluye inactivos), con sus
+     * imágenes. No incluye datos del vendedor porque es su propio panel.
+     */
+    public function DetallesProductoDelVendedor(int $idVendedor, int $idProducto): ?array
+    {
+        $sql = "SELECT p.id_producto, p.identificador, p.nombre, p.descripcion, p.precio,
+                       p.existencia, p.moneda, p.estado, p.fecha_registro, p.fecha_actualizacion,
+                       c.nombre AS categoria
+                FROM productos p
+                JOIN categorias c ON p.id_categoria = c.id_categoria
+                WHERE p.id_producto = :id_producto AND p.id_vendedor = :id_vendedor";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_producto' => $idProducto, 'id_vendedor' => $idVendedor]);
+
+        $producto = $stmt->fetch();
+
+        if ($producto === false) {
+            return null;
+        }
+
+        $sql = "SELECT id_imagen, nombre_archivo, ruta_drive, 
+                       '/api/imagenes/' || id_imagen AS url_publica, es_principal
                 FROM imagenes
                 WHERE id_producto = :id_producto
                 ORDER BY es_principal DESC";
@@ -202,7 +357,11 @@ class ProductoModel
             $idProducto = (int) $stmt->fetchColumn();
 
             if (!empty($datos['imagen']) && is_array($datos['imagen'])) {
-                $this->RegistrarImagen($idProducto, $datos['imagen']);
+                $imagenes = $this->normalizarImagenes($datos['imagen']);
+
+                foreach ($imagenes as $imagen) {
+                    $this->RegistrarImagen($idProducto, $imagen);
+                }
             }
 
             $this->db->commit();
@@ -212,6 +371,18 @@ class ProductoModel
             $this->db->rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Acepta una imagen suelta o una lista de imágenes.
+     */
+    private function normalizarImagenes(array $imagen): array
+    {
+        if (isset($imagen['nombre_archivo'])) {
+            return [$imagen];
+        }
+
+        return array_values(array_filter($imagen, static fn ($item): bool => is_array($item)));
     }
 
     public function RegistrarImagen(int $idProducto, array $imagen): void
@@ -251,7 +422,14 @@ class ProductoModel
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return $stmt->rowCount() > 0;
+        // Si el producto se queda sin existencias, se inactiva automáticamente.
+        $sql = "UPDATE productos SET estado = 'inactivo'
+                WHERE id_producto = :id_producto AND existencia <= 0";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_producto' => $idProducto]);
+
+        return true;
     }
 
     public function CambiarEstadoDelProducto(int $idProducto, string $estado): bool
@@ -278,5 +456,57 @@ class ProductoModel
         $precio = $stmt->fetchColumn();
 
         return $precio === false ? null : (float) $precio;
+    }
+
+    /**
+     * Precio y existencia de un producto activo (para validar el carrito).
+     */
+    public function ConsultarProductoActivo(int $idProducto): ?array
+    {
+        $sql = "SELECT precio, existencia FROM productos
+                WHERE id_producto = :id_producto AND estado = 'activo'";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_producto' => $idProducto]);
+
+        $fila = $stmt->fetch();
+
+        return $fila === false ? null : $fila;
+    }
+
+    /**
+     * Descuenta existencias al agregar al carrito; inactiva el producto
+     * si se queda sin stock.
+     */
+    public function DescontarStock(int $idProducto, int $cantidad): void
+    {
+        $sql = "UPDATE productos
+                SET existencia = existencia - :cantidad,
+                    estado = CASE
+                                WHEN existencia - :cantidad <= 0 THEN 'inactivo'
+                                ELSE estado
+                             END
+                WHERE id_producto = :id_producto";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['cantidad' => $cantidad, 'id_producto' => $idProducto]);
+    }
+
+    /**
+     * Devuelve existencias al quitar del carrito; reactiva el producto
+     * si vuelve a tener stock.
+     */
+    public function RestaurarStock(int $idProducto, int $cantidad): void
+    {
+        $sql = "UPDATE productos
+                SET existencia = existencia + :cantidad,
+                    estado = CASE
+                                WHEN existencia + :cantidad > 0 THEN 'activo'
+                                ELSE estado
+                             END
+                WHERE id_producto = :id_producto";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['cantidad' => $cantidad, 'id_producto' => $idProducto]);
     }
 }

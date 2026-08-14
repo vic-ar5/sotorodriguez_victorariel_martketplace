@@ -1,0 +1,664 @@
+<header class="barra-navegacion">
+  <a class="logotipo-nav" routerLink="/comprador" aria-label="Inicio">
+    <app-logotipo />
+  </a>
+
+  <div class="buscador">
+    <input
+      type="text"
+      [(ngModel)]="terminoBusqueda"
+      (keyup.enter)="buscar()"
+      placeholder="Buscar productos..."
+      aria-label="Buscar productos"
+    />
+    <div class="contenedor-filtros">
+      <button type="button" class="btn-filtro" (click)="alternarFiltros()" aria-label="Filtrar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+      </button>
+
+      @if (filtrosAbiertos) {
+        <div class="panel-filtros">
+          <label>
+            Categoría
+            <select [(ngModel)]="filtro.id_categoria">
+              <option value="">Todas</option>
+              @for (categoria of categorias; track categoria.id_categoria) {
+                <option [ngValue]="categoria.id_categoria.toString()">{{ categoria.nombre }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Precio mínimo
+            <input type="number" min="0" step="0.01" [(ngModel)]="filtro.precio_min" placeholder="0" />
+          </label>
+          <label>
+            Precio máximo
+            <input type="number" min="0" step="0.01" [(ngModel)]="filtro.precio_max" placeholder="—" />
+          </label>
+          <label>
+            Disponibilidad
+            <select [(ngModel)]="filtro.disponibilidad">
+              <option value="">Todas</option>
+              <option value="disponible">Disponible</option>
+              <option value="agotado">Agotado</option>
+            </select>
+          </label>
+          <label>
+            Ordenar por precio
+            <select [(ngModel)]="filtro.orden">
+              <option value="">Sin orden</option>
+              <option value="precio_asc">Menor a mayor</option>
+              <option value="precio_desc">Mayor a menor</option>
+            </select>
+          </label>
+          <div class="acciones-filtros">
+            <button type="button" class="btn btn-aceptar" (click)="aplicarFiltros()">Aplicar</button>
+            <button type="button" class="btn btn-eliminar" (click)="limpiarFiltros()">Limpiar</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <button type="button" (click)="buscar()" aria-label="Buscar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    </button>
+  </div>
+
+  <div class="acciones">
+    <div class="contenedor-cuenta">
+      <button type="button" class="btn-icono" (click)="alternarMenu()" aria-label="Mi cuenta">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      </button>
+
+      @if (menuAbierto) {
+        <div class="panel-cuenta">
+          @if (perfil) {
+            <div class="cabecera-cuenta">
+              <div class="avatar">{{ inicialPerfil() }}</div>
+            <div class="identidad">
+              <strong>{{ perfil.nombre_usuario }}</strong>
+              <span>{{ perfil.correo }}</span>
+            </div>
+            </div>
+
+            @if (!editandoPerfil) {
+              <dl class="datos-cuenta">
+                <div>
+                  <dt>Nombre</dt>
+                  <dd>{{ perfil.nombre }}</dd>
+                </div>
+                <div>
+                  <dt>Apellido paterno</dt>
+                  <dd>{{ perfil.apellido_paterno }}</dd>
+                </div>
+                <div>
+                  <dt>Teléfono</dt>
+                  <dd>{{ perfil.telefono || '—' }}</dd>
+                </div>
+              </dl>
+            } @else if (perfilEditado) {
+              <div class="formulario-perfil">
+                <label>
+                  Nombre
+                  <input type="text" [(ngModel)]="perfilEditado.nombre" maxlength="80" />
+                </label>
+                <label>
+                  Apellido paterno
+                  <input type="text" [(ngModel)]="perfilEditado.apellido_paterno" maxlength="80" />
+                </label>
+                <label>
+                  Teléfono
+                  <input type="tel" [(ngModel)]="perfilEditado.telefono" maxlength="10" />
+                </label>
+              </div>
+            }
+
+            @if (mensajePerfil) {
+              <p class="mensaje-ok">{{ mensajePerfil }}</p>
+            }
+            @if (errorPerfil) {
+              <p class="error">{{ errorPerfil }}</p>
+            }
+
+            <div class="acciones-cuenta">
+              @if (!editandoPerfil) {
+                <button type="button" class="btn btn-aceptar btn-bloque" (click)="iniciarEdicion()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                  Editar
+                </button>
+              } @else {
+                <button type="button" class="btn btn-aceptar btn-bloque" (click)="guardarPerfil()">Guardar</button>
+                <button type="button" class="btn btn-eliminar btn-bloque" (click)="cancelarEdicion()">Cancelar</button>
+              }
+              <button type="button" class="btn btn-eliminar btn-bloque" (click)="cerrarSesion()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                Cerrar sesión
+              </button>
+            </div>
+          } @else {
+            <p class="estado">Cargando…</p>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="contenedor-notificaciones">
+      <button type="button" class="btn-icono" (click)="alternarNotificaciones()" aria-label="Notificaciones">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+        @if (noLeidasNotificaciones > 0) {
+          <span class="bola-notificacion" aria-hidden="true"></span>
+        }
+      </button>
+
+      @if (notificacionesAbierto) {
+        <div class="panel-notificaciones">
+          <h3 class="titulo-pedidos">Notificaciones</h3>
+
+          @if (cargandoNotificaciones) {
+            <p class="estado-carrito">Cargando notificaciones…</p>
+          } @else if (mensajeNotificaciones) {
+            <p class="estado-carrito">{{ mensajeNotificaciones }}</p>
+          } @else if (notificaciones.length === 0) {
+            <p class="estado-carrito">No tienes notificaciones.</p>
+          } @else {
+            <ul class="lista-notificaciones">
+              @for (notificacion of notificaciones; track notificacion.id_notificacion) {
+                <li
+                  class="item-notificacion"
+                  [class.no-leida]="!notificacionLeida(notificacion)"
+                  (click)="abrirPedidoDesdeNotificacion(notificacion)"
+                >
+                  <div class="info-notificacion">
+                    <strong>{{ notificacion.mensaje }}</strong>
+                    <span>{{ formatearFecha(notificacion.fecha_creacion) }}</span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="contenedor-carrito">
+      <button type="button" class="btn-icono" (click)="alternarCarrito()" aria-label="Carrito de compras">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+        @if (carritoTotalProductos > 0) {
+          <span class="indicador-carrito" aria-label="Productos en el carrito">{{ carritoTotalProductos }}</span>
+        }
+      </button>
+
+      @if (carritoAbierto) {
+        <div class="panel-carrito">
+          @if (carrito.items.length === 0) {
+            <p class="estado-carrito">Tu carrito está vacío.</p>
+          } @else {
+            <ul class="lista-carrito">
+              @for (item of carrito.items; track item.id_detalle_carrito) {
+                <li class="item-carrito">
+                  <div class="info-item-carrito">
+                    <strong>{{ item.nombre }}</strong>
+                    <span>{{ formatearPrecio(item.precio_unitario) }}</span>
+                  </div>
+                  <div class="controles-cantidad">
+                    <button
+                      type="button"
+                      class="btn-paso"
+                      [disabled]="item.cantidad <= 1"
+                      (click)="cambiarCantidad(item, item.cantidad - 1)"
+                      aria-label="Disminuir cantidad"
+                    >−</button>
+                    <input
+                      type="number"
+                      min="1"
+                      [max]="item.existencia + item.cantidad"
+                      [value]="item.cantidad"
+                      (change)="cambiarCantidad(item, $any($event.target).value)"
+                      aria-label="Cantidad de {{ item.nombre }}"
+                    />
+                    <button
+                      type="button"
+                      class="btn-paso"
+                      (click)="cambiarCantidad(item, item.cantidad + 1)"
+                      aria-label="Aumentar cantidad"
+                    >+</button>
+                  </div>
+                  <span class="subtotal-item-carrito">{{ formatearPrecio(item.subtotal) }}</span>
+                  <button
+                    type="button"
+                    class="btn-eliminar-item"
+                    (click)="eliminarItem(item)"
+                    aria-label="Eliminar {{ item.nombre }} del carrito"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </button>
+                </li>
+              }
+            </ul>
+            <div class="totales-carrito">
+              <p class="linea-total"><span>Subtotal</span><span>{{ formatearPrecio(carrito.total) }}</span></p>
+              <p class="linea-total total-carrito"><span>Total</span><span>{{ formatearPrecio(carrito.total) }}</span></p>
+            </div>
+          }
+
+          @if (mensajeCart) {
+            <p class="mensaje-carrito">{{ mensajeCart }}</p>
+          }
+
+          @if (mensajePago) {
+            <p class="mensaje-pago">{{ mensajePago }}</p>
+          }
+
+          <div class="acciones-carrito">
+            <button type="button" class="btn btn-aceptar" [disabled]="carrito.items.length === 0" (click)="pagarCarrito()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+              Pagar
+            </button>
+            <button type="button" class="btn btn-eliminar" [disabled]="carrito.items.length === 0" (click)="vaciarCarrito()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              Cancelar carrito
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="contenedor-pedidos">
+      <button type="button" class="btn-icono" (click)="alternarPedidos()" aria-label="Consultar pedidos">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="14 2 6 2 6 22 18 22 18 8"></polyline><polyline points="14 2 14 8 18 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+      </button>
+
+      @if (pedidosAbierto) {
+        <div class="panel-pedidos">
+          <h3 class="titulo-pedidos">Consultar pedidos</h3>
+
+          @if (cargandoPedidos) {
+            <p class="estado-carrito">Cargando pedidos…</p>
+          } @else if (mensajePedidos) {
+            <p class="estado-carrito">{{ mensajePedidos }}</p>
+          } @else if (pedidos.length === 0) {
+            <p class="estado-carrito">Aún no tienes pedidos.</p>
+          } @else {
+            <ul class="lista-pedidos">
+              @for (pedido of pedidos; track pedido.id_pedido) {
+                <li class="item-pedido" (click)="abrirPedido(pedido)">
+                  <div class="info-pedido">
+                    <strong class="folio-pedido">{{ pedido.numero_pedido }}</strong>
+                    <span class="fecha-pedido">{{ formatearFecha(pedido.fecha_pedido) }}</span>
+                  </div>
+                  <div class="total-pedido">
+                    <span class="estado-pedido-item">{{ pedido.estado }}</span>
+                    <strong>{{ formatearPrecio(pedido.total) }}</strong>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</header>
+
+@if (notificacion) {
+  <div class="notificacion" role="status">
+    <span>{{ notificacion }}</span>
+    <button type="button" class="cerrar-notificacion" (click)="cerrarNotificacion()" aria-label="Cerrar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  </div>
+}
+
+<main class="contenido">
+  @if (cargando) {
+    <p class="estado">Cargando productos…</p>
+  } @else if (errorCarga) {
+    <p class="estado">{{ errorCarga }}</p>
+  } @else if (productos.length === 0) {
+    <p class="estado">No hay productos disponibles.</p>
+  } @else {
+    <div class="grilla-productos">
+      @for (producto of productos; track producto.id_producto) {
+        <article class="tarjeta-producto" (click)="abrirDetalle(producto)">
+          <div class="imagen-producto">
+            @if (producto.imagen) {
+              <img [src]="producto.imagen" [alt]="producto.nombre" referrerpolicy="no-referrer" />
+            } @else {
+              <div class="sin-imagen">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+              </div>
+            }
+            <span
+              class="etiqueta-estado"
+              [class.disponible]="producto.existencia > 0"
+              [class.no-disponible]="producto.existencia <= 0"
+            >{{ producto.existencia > 0 ? 'Disponible' : 'Agotado' }}</span>
+          </div>
+          <div class="info-producto">
+            <h3>{{ producto.nombre }}</h3>
+            <p class="precio-producto">{{ formatearPrecio(producto.precio) }}</p>
+            <p class="categoria-producto">{{ producto.categoria }}</p>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</main>
+
+@if (productoSeleccionado) {
+  <div class="fondo-modal" (click)="cerrarDetalle()">
+    <div class="modal-producto" (click)="$event.stopPropagation()">
+      <div class="imagen-modal">
+        @if (imagenDetalle()) {
+          <img [src]="imagenDetalle()" [alt]="productoSeleccionado.nombre" referrerpolicy="no-referrer" />
+        } @else {
+          <div class="sin-imagen">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          </div>
+        }
+      </div>
+      <div class="cuerpo-modal">
+        <h2>{{ productoSeleccionado.nombre }}</h2>
+        <p class="detalle"><strong>Identificador:</strong> {{ productoSeleccionado.identificador }}</p>
+        <p class="detalle"><strong>Descripción:</strong> {{ productoSeleccionado.descripcion }}</p>
+        <p class="detalle"><strong>Precio:</strong> {{ formatearPrecio(productoSeleccionado.precio) }}</p>
+        <p class="detalle"><strong>Categoría:</strong> {{ productoSeleccionado.categoria }}</p>
+        <p class="detalle"><strong>Existencia:</strong> {{ productoSeleccionado.existencia }}</p>
+        <p class="detalle"><strong>Estado:</strong>
+          <span
+            class="etiqueta-estado"
+            [class.disponible]="productoSeleccionado.existencia > 0"
+            [class.no-disponible]="productoSeleccionado.existencia <= 0"
+          >{{ productoSeleccionado.existencia > 0 ? 'Disponible' : 'No disponible' }}</span>
+        </p>
+
+        @if (mensajeCarrito) {
+          <p class="mensaje-carrito">{{ mensajeCarrito }}</p>
+        }
+
+        <div class="cantidad-modal">
+          <label for="cantidad-agregar">Cantidad</label>
+          <input
+            id="cantidad-agregar"
+            type="number"
+            min="1"
+            [max]="productoSeleccionado.existencia"
+            [(ngModel)]="cantidadAgregar"
+          />
+          <span class="stock-disponible">Stock: {{ productoSeleccionado.existencia }}</span>
+        </div>
+
+        <div class="acciones-modal">
+          <button type="button" class="btn btn-aceptar" [disabled]="agregandoCarrito || productoSeleccionado.existencia === 0" (click)="agregarAlCarrito()">
+            {{ agregandoCarrito ? 'Agregando…' : 'Añadir al carrito' }}
+          </button>
+          <button type="button" class="btn btn-eliminar" (click)="cerrarDetalle()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+@if (pagoAbierto) {
+  <div class="fondo-modal" (click)="cerrarPago()">
+    <div class="modal-pago" (click)="$event.stopPropagation()">
+      <div class="cabecera-modal">
+        <h2>Completar compra</h2>
+        <button type="button" class="btn-cerrar-modal" (click)="cerrarPago()" aria-label="Cerrar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <p class="subcabecera-pago">Elige o agrega la dirección donde quieres recibir tu pedido. Quedará guardada para tus próximas compras.</p>
+
+      @if (mensajeDireccion) {
+        <p class="mensaje-error-pago">{{ mensajeDireccion }}</p>
+      }
+
+      @if (!mostrandoNuevaDireccion) {
+        <div class="lista-direcciones">
+          @for (direccion of direcciones; track direccion.id_direccion) {
+            <label
+              class="tarjeta-direccion"
+              [class.seleccionada]="direccion.id_direccion === direccionSeleccionadaId"
+            >
+              <input
+                type="radio"
+                name="direccion-radio"
+                [value]="direccion.id_direccion"
+                [checked]="direccion.id_direccion === direccionSeleccionadaId"
+                (change)="seleccionarDireccion(direccion.id_direccion)"
+              />
+              <div class="info-direccion">
+                <div class="nombre-direccion">
+                  <strong>{{ direccion.nombre }}</strong>
+                  @if (esPrincipal(direccion)) {
+                    <span class="badge-principal">Principal</span>
+                  }
+                </div>
+                <p>{{ direccion.calle }} {{ direccion.numero_exterior }}@if (direccion.numero_interior) { int. {{ direccion.numero_interior }} }</p>
+                <p>{{ direccion.colonia }}, {{ direccion.municipio }}, {{ direccion.estado }} · CP {{ direccion.codigo_postal }}</p>
+              </div>
+              <div class="acciones-direccion">
+                <button type="button" class="btn-mini" (click)="editarDireccion(direccion)">Editar</button>
+                @if (!esPrincipal(direccion)) {
+                  <button type="button" class="btn-mini" (click)="establecerPrincipal(direccion)">Hacer principal</button>
+                }
+                <button type="button" class="btn-mini-eliminar" (click)="eliminarDireccion(direccion)">Eliminar</button>
+              </div>
+            </label>
+          } @empty {
+            <p class="sin-direcciones">Aún no tienes direcciones guardadas. Agrega la primera para continuar.</p>
+          }
+        </div>
+
+        <button type="button" class="btn btn-agregar-direccion" (click)="alternarNuevaDireccion()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Agregar nueva dirección
+        </button>
+      } @else {
+        <div class="formulario-direccion">
+          <h3 class="titulo-formulario">{{ editandoDireccionId ? 'Editar dirección' : 'Nueva dirección' }}</h3>
+
+          <div class="campo">
+            <label for="dir-nombre">Nombre de la dirección</label>
+            <input id="dir-nombre" type="text" [(ngModel)]="nuevaDireccion.nombre" placeholder="Ej. Casa, Oficina" />
+          </div>
+
+          <div class="campo">
+            <label for="dir-cp">Código Postal</label>
+            <input
+              id="dir-cp"
+              type="text"
+              inputmode="numeric"
+              maxlength="5"
+              [(ngModel)]="nuevaDireccion.codigo_postal"
+              (blur)="buscarColonias()"
+              placeholder="Ej. 66220"
+            />
+            <p class="ayuda-campo">Al salir del campo se buscarán las colonias del catálogo de códigos postales.</p>
+          </div>
+
+          @if (cargandoCp) {
+            <p class="mensaje-cp">Buscando asentamientos…</p>
+          } @else if (coloniasCp.length > 0) {
+            <div class="lista-colonias">
+              @for (asentamiento of coloniasCp; track asentamiento.colonia) {
+                <button type="button" class="opcion-colonia" (click)="seleccionarColonia(asentamiento)">
+                  {{ asentamiento.colonia }} — {{ asentamiento.municipio }}, {{ asentamiento.estado }}
+                </button>
+              }
+            </div>
+          }
+          @if (mensajeCp) {
+            <p class="mensaje-cp">{{ mensajeCp }}</p>
+          }
+
+          <div class="campo">
+            <label for="dir-colonia">Colonia</label>
+            <input id="dir-colonia" type="text" [(ngModel)]="nuevaDireccion.colonia" />
+          </div>
+
+          <div class="campo">
+            <label for="dir-calle">Calle</label>
+            <input id="dir-calle" type="text" [(ngModel)]="nuevaDireccion.calle" />
+          </div>
+
+          <div class="fila-campos">
+            <div class="campo">
+              <label for="dir-ext">Número exterior</label>
+              <input id="dir-ext" type="text" [(ngModel)]="nuevaDireccion.numero_exterior" />
+            </div>
+            <div class="campo">
+              <label for="dir-int">Número interior (opcional)</label>
+              <input id="dir-int" type="text" [(ngModel)]="nuevaDireccion.numero_interior" />
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="dir-municipio">Municipio</label>
+            <input id="dir-municipio" type="text" [(ngModel)]="nuevaDireccion.municipio" />
+          </div>
+
+          <div class="campo">
+            <label for="dir-estado">Estado</label>
+            <input id="dir-estado" type="text" list="lista-estados" [(ngModel)]="nuevaDireccion.estado" placeholder="Selecciona o escribe el estado" />
+            <datalist id="lista-estados">
+              @for (estado of estadosMx; track estado.id_estado) {
+                <option [value]="estado.nombre"></option>
+              }
+            </datalist>
+          </div>
+
+          <div class="acciones-formulario">
+            <button type="button" class="btn btn-aceptar" (click)="guardarNuevaDireccion()">
+              {{ editandoDireccionId ? 'Guardar cambios' : 'Guardar dirección' }}
+            </button>
+            <button type="button" class="btn btn-eliminar" (click)="alternarNuevaDireccion()">Cancelar</button>
+          </div>
+        </div>
+      }
+
+      <div class="pie-pago">
+        <p class="total-pagar">Total a pagar: <strong>{{ formatearPrecio(carrito.total) }}</strong></p>
+        <button
+          type="button"
+          class="btn btn-aceptar"
+          [disabled]="procesandoPago || !direccionSeleccionadaId"
+          (click)="confirmarPago()"
+        >
+          {{ procesandoPago ? 'Procesando pago…' : 'Pagar ahora' }}
+        </button>
+      </div>
+
+      @if (mensajePago) {
+        <p class="mensaje-error-pago">{{ mensajePago }}</p>
+      }
+    </div>
+  </div>
+}
+
+@if (recibo && reciboAbierto) {
+  <div class="fondo-modal" (click)="cerrarRecibo()">
+    <div class="modal-recibo" (click)="$event.stopPropagation()">
+      <div class="encabezado-recibo">
+        <div class="logotipo-recibo">
+          <app-logotipo />
+        </div>
+        <div class="datos-recibo">
+          <p class="folio-recibo">Folio: <strong>{{ recibo.numero_pedido }}</strong></p>
+          <p class="fecha-recibo">{{ formatearFecha(recibo.fecha_pedido) }}</p>
+        </div>
+      </div>
+
+      <div class="info-recibo">
+        <div class="bloque-comprador">
+          <h3>Comprador</h3>
+          <p>{{ recibo.persona }}</p>
+        </div>
+        <div class="bloque-direccion">
+          <h3>Dirección de envío</h3>
+          <p>{{ recibo.direccion.nombre }} — {{ recibo.direccion.calle }} {{ recibo.direccion.numero_exterior }}@if (recibo.direccion.numero_interior) { int. {{ recibo.direccion.numero_interior }} }</p>
+          <p>{{ recibo.direccion.colonia }}, {{ recibo.direccion.municipio }}, {{ recibo.direccion.estado }}</p>
+          <p>CP {{ recibo.direccion.codigo_postal }} · {{ recibo.direccion.pais }}</p>
+        </div>
+      </div>
+
+      <div class="tabla-recibo">
+        <table>
+          <thead>
+            <tr>
+              <th>Identificador</th>
+              <th>Producto</th>
+              <th class="al-derecha">Cantidad</th>
+              <th class="al-derecha">Precio unitario</th>
+              <th class="al-derecha">Total del producto</th>
+              <th>Vendedor</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of recibo.detalle; track item.id_producto) {
+              <tr>
+                <td>{{ item.identificador }}</td>
+                <td>{{ item.nombre }}</td>
+                <td class="al-derecha">{{ item.cantidad }}</td>
+                <td class="al-derecha">{{ formatearPrecio(item.precio_unitario) }}</td>
+                <td class="al-derecha">{{ formatearPrecio(item.subtotal) }}</td>
+                <td>{{ item.vendedor }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="totales-recibo">
+        <p class="linea-total"><span>Subtotal</span><span>{{ formatearPrecio(recibo.total) }}</span></p>
+        <p class="linea-total total-recibo"><span>Total</span><span>{{ formatearPrecio(recibo.total) }}</span></p>
+      </div>
+
+      <div class="pie-recibo">
+        <p class="estado-recibo">Estado del pedido: <strong>{{ recibo.estado }}</strong></p>
+        <div class="acciones-recibo">
+          @if (recibo.estado === 'Pendiente') {
+            <button
+              type="button"
+              class="btn btn-aceptar"
+              [disabled]="procesandoPago || cancelandoPedido"
+              (click)="confirmarPagoRecibo()"
+            >
+              {{ procesandoPago ? 'Confirmando…' : 'Confirmar pago' }}
+            </button>
+          }
+          @if (recibo.estado === 'Pendiente' || recibo.estado === 'Confirmado') {
+            <button
+              type="button"
+              class="btn btn-eliminar"
+              [disabled]="procesandoPago || cancelandoPedido"
+              (click)="cancelarPedido()"
+            >
+              {{ cancelandoPedido ? 'Cancelando…' : 'Cancelar' }}
+            </button>
+          }
+          @if (recibo.estado === 'Enviado') {
+            <button
+              type="button"
+              class="btn btn-aceptar"
+              [disabled]="confirmandoEntrega"
+              (click)="confirmarEntrega()"
+            >
+              {{ confirmandoEntrega ? 'Confirmando…' : 'Confirmar entrega' }}
+            </button>
+          }
+          <button type="button" class="btn btn-aceptar" (click)="descargarReciboPdf()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Descargar PDF
+          </button>
+          <button type="button" class="btn btn-eliminar" (click)="cerrarRecibo()">Cerrar</button>
+        </div>
+      </div>
+      @if (mensajeRecibo) {
+        <p class="mensaje-error-pago">{{ mensajeRecibo }}</p>
+      }
+    </div>
+  </div>
+}

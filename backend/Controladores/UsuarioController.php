@@ -35,4 +35,38 @@ class UsuarioController
 
         Flight::json($this->modelo->ConsultarTodosLosUsuarios($activo));
     }
+
+    /**
+     * Perfil del comprador autenticado (requiere token con rol comprador).
+     */
+    public function miPerfil(): void
+    {
+        $usuario = AuthGuard::requireRol('comprador');
+
+        $perfil = $this->modelo->ConsultarMiPerfil((int) $usuario['sub']);
+
+        if ($perfil === null) {
+            Flight::json(['error' => 'Usuario no encontrado'], 404);
+            return;
+        }
+
+        Flight::json($perfil);
+    }
+
+    /**
+     * Actualiza los datos personales del comprador autenticado.
+     */
+    public function actualizarMiPerfil(): void
+    {
+        $usuario = AuthGuard::requireRol('comprador');
+
+        $datos = Http::bodyTodo();
+
+        if (!$this->modelo->ActualizarMiPerfil((int) $usuario['sub'], $datos)) {
+            Flight::json(['error' => 'No se pudo actualizar el perfil'], 422);
+            return;
+        }
+
+        Flight::json(['mensaje' => 'Perfil actualizado']);
+    }
 }

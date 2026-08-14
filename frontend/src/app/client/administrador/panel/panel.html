@@ -1,0 +1,800 @@
+<header class="barra-navegacion">
+  <a class="logotipo-nav" routerLink="/administrador" aria-label="Inicio">
+    <app-logotipo />
+  </a>
+
+  <nav class="pestanas" aria-label="Secciones del administrador">
+    <button type="button" class="pestana" [class.activa]="pestanaActiva === 'inicio'" (click)="irA('inicio')">
+      Inicio
+    </button>
+    <button type="button" class="pestana" [class.activa]="pestanaActiva === 'registrar'" (click)="irA('registrar')">
+      Registrar producto
+    </button>
+    <button type="button" class="pestana" [class.activa]="pestanaActiva === 'productos'" (click)="irA('productos')">
+      Productos
+    </button>
+    <button type="button" class="pestana" [class.activa]="pestanaActiva === 'categorias'" (click)="irA('categorias')">
+      Categorías
+    </button>
+    <button type="button" class="pestana" [class.activa]="pestanaActiva === 'usuarios'" (click)="irA('usuarios')">
+      Usuarios
+    </button>
+    <button type="button" class="pestana" [class.activa]="pestanaActiva === 'pedidos'" (click)="irA('pedidos')">
+      Pedidos
+    </button>
+  </nav>
+
+  <div class="acciones">
+    <div class="contenedor-cuenta">
+      <button type="button" class="btn-icono" (click)="alternarMenu()" aria-label="Mi cuenta">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+      </button>
+
+      @if (menuAbierto) {
+        <div class="panel-cuenta">
+          <div class="cabecera-cuenta">
+            <div class="avatar">A</div>
+            <div class="identidad">
+              <strong>Administrador</strong>
+              <span>Panel de administración</span>
+            </div>
+          </div>
+          <div class="acciones-cuenta">
+            <button type="button" class="btn btn-eliminar btn-bloque" (click)="cerrarSesion()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</header>
+
+@if (notificacion) {
+  <div class="notificacion" role="status">
+    <span>{{ notificacion }}</span>
+    <button type="button" class="cerrar-notificacion" (click)="cerrarNotificacion()" aria-label="Cerrar">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  </div>
+}
+
+<main class="contenido">
+  @switch (pestanaActiva) {
+    @case ('inicio') {
+      @if (cargandoDashboard) {
+        <p class="estado">Cargando resumen…</p>
+      } @else if (errorDashboard) {
+        <p class="estado">{{ errorDashboard }}</p>
+      } @else if (dashboard) {
+        <div class="tarjetas-resumen">
+          <div class="tarjeta-resumen resumen-disponibles">
+            <span class="icono-resumen">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            </span>
+            <div class="datos-resumen">
+              <strong>{{ dashboard.productos.disponibles }}</strong>
+              <span>Productos disponibles</span>
+            </div>
+          </div>
+          <div class="tarjeta-resumen resumen-no-disponibles">
+            <span class="icono-resumen">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>
+            </span>
+            <div class="datos-resumen">
+              <strong>{{ dashboard.productos.no_disponibles }}</strong>
+              <span>Productos no disponibles</span>
+            </div>
+          </div>
+          <div class="tarjeta-resumen resumen-pedidos">
+            <span class="icono-resumen">
+              <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </span>
+            <div class="datos-resumen">
+              <strong>{{ dashboard.pedidos.total }}</strong>
+              <span>Pedidos realizados</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="graficas">
+          <section class="grafica">
+            <h3>Productos disponibles vs no disponibles</h3>
+            <div class="contenedor-donut">
+              <div class="donut" [style.background]="donutFondo()" aria-hidden="true"></div>
+              <div class="leyenda-donut">
+                <p><span class="punto punto-disponible"></span> Disponibles: <strong>{{ dashboard.productos.disponibles }}</strong></p>
+                <p><span class="punto punto-no-disponible"></span> No disponibles: <strong>{{ dashboard.productos.no_disponibles }}</strong></p>
+                <p><span class="punto punto-total"></span> Total: <strong>{{ dashboard.productos.total }}</strong></p>
+              </div>
+            </div>
+          </section>
+
+          <section class="grafica">
+            <h3>Pedidos por estado</h3>
+            @if (dashboard.pedidos.por_estado.length === 0) {
+              <p class="estado-grafica">Aún no hay pedidos con tus productos.</p>
+            } @else {
+              <div class="grafica-barras">
+                @for (estado of dashboard.pedidos.por_estado; track estado.estado) {
+                  <div class="columna-barra">
+                    <div class="barra" [style.height.%]="alturaBarra(estado.cantidad)"></div>
+                    <span class="etiqueta-barra">{{ estado.estado }}</span>
+                    <strong class="valor-barra">{{ estado.cantidad }}</strong>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
+          <section class="grafica grafica-completa">
+            <h3>Productos por categoría</h3>
+            @if (dashboard.productos.por_categoria.length === 0) {
+              <p class="estado-grafica">Aún no tienes productos.</p>
+            } @else {
+              <div class="grafica-barras-h">
+                @for (categoria of dashboard.productos.por_categoria; track categoria.categoria) {
+                  <div class="fila-barra-h">
+                    <span class="etiqueta-categoria">{{ categoria.categoria }}</span>
+                    <div class="pista-barra-h">
+                      <div class="barra-h" [style.width.%]="anchoCategoria(categoria.total)"></div>
+                    </div>
+                    <strong class="valor-categoria">{{ categoria.total }}</strong>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        </div>
+      }
+    }
+
+    @case ('registrar') {
+      <section class="panel-registro">
+        <h2>Registrar producto</h2>
+        <p class="subtitulo-panel">
+          Captura los datos del producto y selecciona sus imágenes. Al guardar,
+          las imágenes se suben automáticamente a Google Drive.
+        </p>
+
+        @if (mensajeRegistro) {
+          <p class="mensaje-ok" role="status">{{ mensajeRegistro }}</p>
+        }
+
+        <form [formGroup]="formulario" (ngSubmit)="registrarProducto()" novalidate class="formulario-registro">
+          <div class="fila-campos">
+            <div class="campo" [class.invalido]="formulario.controls.identificador.touched && formulario.controls.identificador.invalid">
+              <label for="adm-identificador">Identificador</label>
+              <input
+                id="adm-identificador"
+                type="text"
+                formControlName="identificador"
+                placeholder="Ej. PROD-001"
+                maxlength="20"
+                (beforeinput)="bloquearCaracteres('identificador', permitidosIdentificador, $event)"
+              />
+              @if (mensajeError('identificador')) {
+                <span class="error">{{ mensajeError('identificador') }}</span>
+              }
+            </div>
+
+            <div class="campo" [class.invalido]="formulario.controls.id_categoria.touched && formulario.controls.id_categoria.invalid">
+              <label for="adm-id_categoria">Categoría</label>
+              <select id="adm-id_categoria" formControlName="id_categoria">
+                <option [ngValue]="null" disabled>Selecciona una categoría</option>
+                @for (categoria of categorias; track categoria.id_categoria) {
+                  <option [ngValue]="categoria.id_categoria">{{ categoria.nombre }}</option>
+                }
+              </select>
+              @if (mensajeError('id_categoria')) {
+                <span class="error">{{ mensajeError('id_categoria') }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="campo" [class.invalido]="formulario.controls.nombre.touched && formulario.controls.nombre.invalid">
+            <label for="adm-nombre">Nombre del producto</label>
+            <input
+              id="adm-nombre"
+              type="text"
+              formControlName="nombre"
+              placeholder="Nombre del producto"
+              maxlength="150"
+              (beforeinput)="bloquearCaracteres('nombre', permitidosNombre, $event)"
+            />
+            @if (mensajeError('nombre')) {
+              <span class="error">{{ mensajeError('nombre') }}</span>
+            }
+          </div>
+
+          <div class="campo">
+            <label for="adm-descripcion">Descripción</label>
+            <textarea
+              id="adm-descripcion"
+              formControlName="descripcion"
+              rows="4"
+              maxlength="500"
+              placeholder="Describe el producto (opcional)"
+            ></textarea>
+            @if (mensajeError('descripcion')) {
+              <span class="error">{{ mensajeError('descripcion') }}</span>
+            }
+          </div>
+
+          <div class="fila-campos">
+            <div class="campo" [class.invalido]="formulario.controls.precio.touched && formulario.controls.precio.invalid">
+              <label for="adm-precio">Precio (MXN)</label>
+              <input
+                id="adm-precio"
+                type="text"
+                formControlName="precio"
+                inputmode="decimal"
+                placeholder="0.00"
+                (beforeinput)="bloquearCaracteres('precio', permitidosPrecio, $event)"
+              />
+              @if (mensajeError('precio')) {
+                <span class="error">{{ mensajeError('precio') }}</span>
+              }
+            </div>
+
+            <div class="campo" [class.invalido]="formulario.controls.existencia.touched && formulario.controls.existencia.invalid">
+              <label for="adm-existencia">Existencia (stock)</label>
+              <input
+                id="adm-existencia"
+                type="text"
+                formControlName="existencia"
+                inputmode="numeric"
+                placeholder="0"
+                (beforeinput)="bloquearCaracteres('existencia', permitidosDigito, $event)"
+              />
+              @if (mensajeError('existencia')) {
+                <span class="error">{{ mensajeError('existencia') }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="campo campo-imagenes">
+            <label>Imágenes del producto</label>
+
+            <button type="button" class="zona-subida" (click)="abrirSelectorImagenes()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              <span class="zona-subida-titulo">Haz clic para subir imágenes</span>
+              <span class="zona-subida-ayuda">Solo JPG y PNG · Hasta 5 imágenes · 5 MB máximo cada una</span>
+            </button>
+
+            <input
+              #selectorImagenes
+              id="adm-imagenes"
+              type="file"
+              accept=".jpg,.png,image/jpeg,image/png"
+              multiple
+              hidden
+              (change)="onImagenesSeleccionadas($event)"
+            />
+
+            <p class="ayuda-campo">
+              Al guardar el producto, las imágenes se suben automáticamente a Google Drive.
+            </p>
+
+            @if (imagenesSeleccionadas.length > 0) {
+              <div class="vista-previa-imagenes">
+                @for (imagen of imagenesSeleccionadas; track imagen.url; let i = $index) {
+                  <div class="imagen-preview">
+                    <img [src]="imagen.url" [alt]="'Imagen ' + (i + 1)" />
+                    <button
+                      type="button"
+                      class="btn-quitar-imagen"
+                      (click)="quitarImagen(i)"
+                      [attr.aria-label]="'Quitar imagen ' + (i + 1)"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          @if (errorRegistro) {
+            <p class="error" role="alert">{{ errorRegistro }}</p>
+          }
+
+          <button type="submit" class="btn btn-aceptar btn-bloque" [disabled]="registrando">
+            {{ registrando ? 'Registrando…' : 'Registrar producto' }}
+          </button>
+        </form>
+      </section>
+    }
+
+    @case ('productos') {
+      @if (cargandoProductos) {
+        <p class="estado">Cargando productos…</p>
+      } @else if (errorProductos) {
+        <p class="estado">{{ errorProductos }}</p>
+      } @else if (productos.length === 0) {
+        <p class="estado">Aún no tienes productos registrados.</p>
+      } @else {
+        <div class="filtros-productos">
+          <label for="adm-filtro-disponibilidad">Mostrar</label>
+          <select id="adm-filtro-disponibilidad" [(ngModel)]="filtroDisponibilidad">
+            <option value="todos">Todos</option>
+            <option value="disponibles">Disponibles</option>
+            <option value="no_disponibles">No disponibles</option>
+          </select>
+        </div>
+
+        @if (productosFiltrados().length === 0) {
+          <p class="estado">No hay productos que coincidan con el filtro seleccionado.</p>
+        } @else {
+          <div class="grilla-productos">
+            @for (producto of productosFiltrados(); track producto.id_producto) {
+              <article class="tarjeta-producto" (click)="abrirDetalle(producto)">
+                <div class="imagen-producto">
+                  @if (producto.imagen) {
+                    <img [src]="producto.imagen" [alt]="producto.nombre" referrerpolicy="no-referrer" />
+                  } @else {
+                    <div class="sin-imagen">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    </div>
+                  }
+                  <span
+                    class="etiqueta-estado"
+                    [class.disponible]="esDisponible(producto)"
+                    [class.no-disponible]="!esDisponible(producto)"
+                  >{{ esDisponible(producto) ? 'Disponible' : 'No disponible' }}</span>
+                </div>
+                <div class="info-producto">
+                  <h3>{{ producto.nombre }}</h3>
+                  <p class="identificador-producto">{{ producto.identificador }}</p>
+                  <p class="precio-producto">{{ formatearPrecio(producto.precio) }}</p>
+                  <p class="stock-producto">Stock: {{ producto.existencia }}</p>
+                </div>
+              </article>
+            }
+          </div>
+        }
+      }
+    }
+
+    @case ('categorias') {
+      <div class="panel-categorias">
+        <section class="seccion-categorias">
+          <h2>Nueva categoría</h2>
+          <p class="subtitulo-panel">
+            Agrega una categoría para clasificar tus productos.
+          </p>
+
+          @if (mensajeCategoria) {
+            <p class="mensaje-ok" role="status">{{ mensajeCategoria }}</p>
+          }
+
+          <form [formGroup]="formularioCategoria" (ngSubmit)="registrarCategoria()" novalidate class="formulario-registro">
+            <div class="campo" [class.invalido]="formularioCategoria.controls.nombre.touched && formularioCategoria.controls.nombre.invalid">
+              <label for="adm-cat-nombre">Nombre</label>
+              <input
+                id="adm-cat-nombre"
+                type="text"
+                formControlName="nombre"
+                placeholder="Nombre de la categoría"
+                maxlength="60"
+              />
+              @if (mensajeErrorCategoria('nombre')) {
+                <span class="error">{{ mensajeErrorCategoria('nombre') }}</span>
+              }
+            </div>
+
+            <div class="campo">
+              <label for="adm-cat-descripcion">Descripción</label>
+              <textarea
+                id="adm-cat-descripcion"
+                formControlName="descripcion"
+                rows="2"
+                maxlength="200"
+                placeholder="Descripción (opcional)"
+              ></textarea>
+              @if (mensajeErrorCategoria('descripcion')) {
+                <span class="error">{{ mensajeErrorCategoria('descripcion') }}</span>
+              }
+            </div>
+
+            @if (errorCategoria) {
+              <p class="error" role="alert">{{ errorCategoria }}</p>
+            }
+
+            <button type="submit" class="btn btn-aceptar" [disabled]="creandoCategoria">
+              {{ creandoCategoria ? 'Guardando…' : 'Agregar categoría' }}
+            </button>
+          </form>
+        </section>
+
+        <section class="seccion-categorias">
+          <div class="cabecera-seccion">
+            <h2>Categorías</h2>
+            <div class="filtros-productos">
+              <label for="adm-filtro-categorias">Mostrar</label>
+              <select id="adm-filtro-categorias" [(ngModel)]="filtroCategorias">
+                <option value="todas">Todas</option>
+                <option value="activas">Activas</option>
+                <option value="inactivas">Inactivas</option>
+              </select>
+            </div>
+          </div>
+
+          @if (cargandoCategorias) {
+            <p class="estado">Cargando categorías…</p>
+          } @else if (errorCategorias) {
+            <p class="estado">{{ errorCategorias }}</p>
+          } @else if (categoriasAdmin.length === 0) {
+            <p class="estado">Aún no hay categorías registradas.</p>
+          } @else if (categoriasFiltradas().length === 0) {
+            <p class="estado">No hay categorías que coincidan con el filtro seleccionado.</p>
+          } @else {
+            <ul class="lista-categorias">
+              @for (categoria of categoriasFiltradas(); track categoria.id_categoria) {
+                <li class="item-categoria">
+                  <div class="info-categoria">
+                    <strong>{{ categoria.nombre }}</strong>
+                    @if (categoria.descripcion) {
+                      <span>{{ categoria.descripcion }}</span>
+                    }
+                  </div>
+
+                  <span
+                    class="etiqueta-estado"
+                    [class.disponible]="esActiva(categoria.activo)"
+                    [class.no-disponible]="!esActiva(categoria.activo)"
+                  >{{ esActiva(categoria.activo) ? 'Activa' : 'Inactiva' }}</span>
+
+                  <button
+                    type="button"
+                    class="btn btn-mini-categoria"
+                    [class.btn-eliminar]="esActiva(categoria.activo)"
+                    [class.btn-aceptar]="!esActiva(categoria.activo)"
+                    [disabled]="cambiandoIdCategoria === categoria.id_categoria"
+                    (click)="cambiarEstadoCategoria(categoria)"
+                  >
+                    {{ cambiandoIdCategoria === categoria.id_categoria
+                      ? 'Procesando…'
+                      : (esActiva(categoria.activo) ? 'Desactivar' : 'Activar') }}
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+    }
+
+    @case ('usuarios') {
+      <section class="seccion-categorias">
+        <h2>Usuarios</h2>
+        <p class="subtitulo-panel">
+          Consulta los usuarios registrados con su usuario, correo, teléfono y nombre.
+        </p>
+
+        @if (cargandoUsuarios) {
+          <p class="estado">Cargando usuarios…</p>
+        } @else if (errorUsuarios) {
+          <p class="estado">{{ errorUsuarios }}</p>
+        } @else if (usuarios.length === 0) {
+          <p class="estado">Aún no hay usuarios registrados.</p>
+        } @else {
+          <div class="tabla-contenedor">
+            <table class="tabla-usuarios">
+              <thead>
+                <tr>
+                  <th>Usuario</th>
+                  <th>Correo electrónico</th>
+                  <th>Teléfono</th>
+                  <th>Nombre</th>
+                  <th>Rol</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (usuario of usuarios; track usuario.id_usuario) {
+                  <tr>
+                    <td>{{ usuario.nombre_usuario }}</td>
+                    <td>{{ usuario.correo }}</td>
+                    <td>{{ usuario.telefono || '—' }}</td>
+                    <td>{{ nombreCompleto(usuario) || '—' }}</td>
+                    <td>{{ usuario.rol }}</td>
+                    <td>
+                      <span
+                        class="etiqueta-estado"
+                        [class.disponible]="esActiva(usuario.activo)"
+                        [class.no-disponible]="!esActiva(usuario.activo)"
+                      >{{ esActiva(usuario.activo) ? 'Activo' : 'Inactivo' }}</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    }
+    @case ('pedidos') {
+      <section class="seccion-categorias">
+        <h2>Pedidos</h2>
+        <p class="subtitulo-panel">
+          Consulta los pedidos, búscalos por folio o usuario y cambia su estado.
+        </p>
+
+        <div class="filtros-pedidos">
+          <label>
+            Estado
+            <select [(ngModel)]="filtroEstadoPedido" (change)="cargarPedidos()">
+              <option value="">Todos</option>
+              @for (estado of estadosPedido; track estado) {
+                <option [value]="estado">{{ estado }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Usuario
+            <input
+              type="text"
+              [(ngModel)]="filtroUsuarioPedido"
+              (keyup.enter)="cargarPedidos()"
+              placeholder="Nombre de usuario o persona"
+            />
+          </label>
+          <label>
+            Folio
+            <input
+              type="text"
+              [(ngModel)]="filtroFolioPedido"
+              (keyup.enter)="cargarPedidos()"
+              placeholder="Ej. PED-1000"
+            />
+          </label>
+          <button type="button" class="btn btn-aceptar" (click)="cargarPedidos()">Buscar</button>
+          <button type="button" class="btn btn-eliminar" (click)="limpiarFiltrosPedidos()">Limpiar</button>
+        </div>
+
+        @if (cargandoPedidos) {
+          <p class="estado">Cargando pedidos…</p>
+        } @else if (errorPedidos) {
+          <p class="estado">{{ errorPedidos }}</p>
+        } @else if (pedidos.length === 0) {
+          <p class="estado">No hay pedidos que coincidan con la búsqueda.</p>
+        } @else {
+          <ul class="lista-pedidos-admin">
+            @for (pedido of pedidos; track pedido.id_pedido) {
+              <li class="item-pedido-admin" (click)="abrirPedido(pedido)">
+                <div class="info-pedido-admin">
+                  <strong class="folio-pedido">{{ pedido.numero_pedido }}</strong>
+                  <span class="fecha-pedido">{{ formatearFecha(pedido.fecha_pedido) }}</span>
+                </div>
+                <div class="comprador-pedido-admin">
+                  <strong>{{ compradorPedido(pedido) }}</strong>
+                  <span>{{ pedido.direccion }}</span>
+                </div>
+                <div class="estado-pedido-admin">
+                  <span class="etiqueta-estado" [class.disponible]="pedido.estado === 'Entregado'" [class.no-disponible]="pedido.estado !== 'Entregado'">
+                    {{ pedido.estado }}
+                  </span>
+                </div>
+                <div class="total-pedido-admin">
+                  <strong>{{ formatearPrecio(pedido.total) }}</strong>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+    }
+  }
+</main>
+
+@if (cargandoDetallePedido || pedidoSeleccionado) {
+  <div class="fondo-modal" (click)="cerrarPedido()">
+    <div class="modal-recibo" (click)="$event.stopPropagation()">
+      @if (cargandoDetallePedido) {
+        <p class="estado">Cargando pedido…</p>
+      } @else if (pedidoSeleccionado) {
+        <div class="encabezado-recibo">
+          <div class="logotipo-recibo">
+            <app-logotipo />
+          </div>
+          <div class="datos-recibo">
+            <p class="folio-recibo">Folio: <strong>{{ pedidoSeleccionado.numero_pedido }}</strong></p>
+            <p class="fecha-recibo">{{ formatearFecha(pedidoSeleccionado.fecha_pedido) }}</p>
+          </div>
+        </div>
+
+        <div class="info-recibo">
+          <div class="bloque-comprador">
+            <h3>Comprador</h3>
+            <p>{{ pedidoSeleccionado.persona || pedidoSeleccionado.nombre_usuario }}</p>
+            <p class="usuario-recibo">{{ pedidoSeleccionado.nombre_usuario }}</p>
+          </div>
+          <div class="bloque-direccion">
+            <h3>Dirección de envío</h3>
+            <p>
+              {{ pedidoSeleccionado.direccion.nombre }} — {{ pedidoSeleccionado.direccion.calle }} {{ pedidoSeleccionado.direccion.numero_exterior }}
+              @if (pedidoSeleccionado.direccion.numero_interior) {
+                int. {{ pedidoSeleccionado.direccion.numero_interior }}
+              }
+            </p>
+            <p>{{ pedidoSeleccionado.direccion.colonia }}, {{ pedidoSeleccionado.direccion.municipio }}, {{ pedidoSeleccionado.direccion.estado }}</p>
+            <p>CP {{ pedidoSeleccionado.direccion.codigo_postal }} · {{ pedidoSeleccionado.direccion.pais }}</p>
+          </div>
+        </div>
+
+        <div class="tabla-recibo">
+          <table>
+            <thead>
+              <tr>
+                <th>Identificador</th>
+                <th>Producto</th>
+                <th class="al-derecha">Cantidad</th>
+                <th class="al-derecha">Precio unitario</th>
+                <th class="al-derecha">Total del producto</th>
+                <th>Vendedor</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of pedidoSeleccionado.detalle; track item.id_producto) {
+                <tr>
+                  <td>{{ item.identificador }}</td>
+                  <td>{{ item.nombre }}</td>
+                  <td class="al-derecha">{{ item.cantidad }}</td>
+                  <td class="al-derecha">{{ formatearPrecio(item.precio_unitario) }}</td>
+                  <td class="al-derecha">{{ formatearPrecio(item.subtotal) }}</td>
+                  <td>{{ item.vendedor }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="totales-recibo">
+          <p class="linea-total"><span>Total</span><span>{{ formatearPrecio(pedidoSeleccionado.total) }}</span></p>
+        </div>
+
+        <div class="pie-recibo">
+          <p class="estado-recibo">Estado del pedido: <strong>{{ pedidoSeleccionado.estado }}</strong></p>
+
+          @if (mensajePedido) {
+            <p class="mensaje-ok">{{ mensajePedido }}</p>
+          }
+          @if (errorPedido) {
+            <p class="error">{{ errorPedido }}</p>
+          }
+
+          <div class="acciones-recibo">
+            @for (accion of accionesPedido(pedidoSeleccionado.estado); track accion.estado) {
+              <button
+                type="button"
+                class="btn"
+                [class.btn-aceptar]="accion.estado !== 'Cancelado'"
+                [class.btn-eliminar]="accion.estado === 'Cancelado'"
+                [disabled]="cambiandoEstadoPedido"
+                (click)="cambiarEstadoPedido(accion.estado)"
+              >
+                {{ cambiandoEstadoPedido ? 'Procesando…' : accion.etiqueta }}
+              </button>
+            }
+            <button type="button" class="btn btn-eliminar" (click)="cerrarPedido()">Cerrar</button>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+@if (productoSeleccionado) {
+  <div class="fondo-modal" (click)="cerrarDetalle()">
+    <div class="modal-producto" (click)="$event.stopPropagation()">
+      <div class="imagen-modal">
+        @if (imagenDetalle()) {
+          <img [src]="imagenDetalle()" [alt]="productoSeleccionado.nombre" referrerpolicy="no-referrer" />
+        } @else {
+          <div class="sin-imagen">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          </div>
+        }
+      </div>
+
+      <div class="cuerpo-modal">
+        @if (!editandoProducto) {
+          <h2>{{ productoSeleccionado.nombre }}</h2>
+          <p class="detalle"><strong>Identificador:</strong> {{ productoSeleccionado.identificador }}</p>
+          <p class="detalle"><strong>Descripción:</strong> {{ productoSeleccionado.descripcion }}</p>
+          <p class="detalle"><strong>Precio:</strong> {{ formatearPrecio(productoSeleccionado.precio) }}</p>
+          <p class="detalle"><strong>Categoría:</strong> {{ productoSeleccionado.categoria }}</p>
+          <p class="detalle"><strong>Existencia:</strong> {{ productoSeleccionado.existencia }}</p>
+          <p class="detalle"><strong>Estado:</strong>
+            <span
+              class="etiqueta-estado"
+              [class.disponible]="esDisponible(productoSeleccionado)"
+              [class.no-disponible]="!esDisponible(productoSeleccionado)"
+            >{{ esDisponible(productoSeleccionado) ? 'Disponible' : 'No disponible' }}</span>
+          </p>
+          <p class="detalle"><strong>Fecha de registro:</strong> {{ formatearFecha(productoSeleccionado.fecha_registro) }}</p>
+
+          @if (mensajeDetalle) {
+            <p class="mensaje-ok">{{ mensajeDetalle }}</p>
+          }
+          @if (errorDetalle) {
+            <p class="error">{{ errorDetalle }}</p>
+          }
+
+          <div class="acciones-modal">
+            <button type="button" class="btn btn-aceptar" (click)="iniciarEdicion()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              Editar
+            </button>
+            @if (productoSeleccionado.estado === 'activo') {
+              <button
+                type="button"
+                class="btn btn-eliminar"
+                [disabled]="cambiandoEstado"
+                (click)="cambiarDisponibilidad('inactivo')"
+              >
+                {{ cambiandoEstado ? 'Procesando…' : 'Deshabilitar' }}
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-aceptar"
+                [disabled]="cambiandoEstado"
+                (click)="cambiarDisponibilidad('activo')"
+              >
+                {{ cambiandoEstado ? 'Procesando…' : 'Habilitar' }}
+              </button>
+            }
+            <button type="button" class="btn btn-eliminar" (click)="cerrarDetalle()">Cerrar</button>
+          </div>
+        } @else if (productoEditado) {
+          <h2>Editar producto</h2>
+
+          <div class="campo">
+            <label for="ed-nombre">Nombre</label>
+            <input id="ed-nombre" type="text" [(ngModel)]="productoEditado.nombre" maxlength="120" />
+          </div>
+
+          <div class="campo">
+            <label for="ed-descripcion">Descripción</label>
+            <textarea id="ed-descripcion" [(ngModel)]="productoEditado.descripcion" rows="3"></textarea>
+          </div>
+
+          <div class="fila-campos">
+            <div class="campo">
+              <label for="ed-precio">Precio (MXN)</label>
+              <input id="ed-precio" type="number" min="0" step="0.01" [(ngModel)]="productoEditado.precio" />
+            </div>
+            <div class="campo">
+              <label for="ed-existencia">Existencia (stock)</label>
+              <input id="ed-existencia" type="number" min="0" step="1" [(ngModel)]="productoEditado.existencia" />
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="ed-categoria">Categoría</label>
+            <select id="ed-categoria" [(ngModel)]="productoEditado.id_categoria">
+              <option [ngValue]="null">Sin categoría</option>
+              @for (categoria of categorias; track categoria.id_categoria) {
+                <option [ngValue]="categoria.id_categoria">{{ categoria.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          @if (errorDetalle) {
+            <p class="error">{{ errorDetalle }}</p>
+          }
+
+          <div class="acciones-modal">
+            <button type="button" class="btn btn-aceptar" [disabled]="guardandoEdicion" (click)="guardarEdicion()">
+              {{ guardandoEdicion ? 'Guardando…' : 'Guardar cambios' }}
+            </button>
+            <button type="button" class="btn btn-eliminar" [disabled]="guardandoEdicion" (click)="cancelarEdicion()">Cancelar</button>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}

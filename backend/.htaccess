@@ -1,3 +1,8 @@
 RewriteEngine On
+
+# Conservar el encabezado Authorization para los endpoints protegidos
+RewriteCond %{HTTP:Authorization} .
+RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
 RewriteCond %{REQUEST_URI} !^/public/
 RewriteRule ^(.*)$ public/$1 [QSA,L]

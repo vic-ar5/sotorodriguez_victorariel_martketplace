@@ -1,0 +1,29 @@
+.campo-contrasena {
+  position: relative;
+}
+
+.campo .campo-contrasena input {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+
+.campo-contrasena .btn-ojo {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #7a8699;
+  transition: color 0.2s ease;
+}
+
+.campo-contrasena .btn-ojo:hover {
+  color: var(--azul-hover);
+}
