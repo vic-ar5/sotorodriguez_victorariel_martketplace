@@ -300,13 +300,21 @@ class ProductoController
             // Devolver la imagen con headers CORS
             Flight::response()
                 ->header('Content-Type', $tipoMime)
-                ->header('Content-Length', strlen($contenido))
+                ->header('Content-Length', (string) strlen($contenido))
                 ->header('Cache-Control', 'public, max-age=86400')
                 ->header('Access-Control-Allow-Origin', '*');
 
             echo $contenido;
         } catch (Throwable $e) {
-            Flight::json(['error' => 'Error al descargar la imagen: ' . $e->getMessage()], 500);
+            Flight::response()
+                ->status(500)
+                ->header('Content-Type', 'application/json');
+
+            Flight::json([
+                'error' => 'Error al descargar la imagen',
+                'detalle' => $e->getMessage(),
+                'tipo' => get_class($e),
+            ]);
         }
     }
 }

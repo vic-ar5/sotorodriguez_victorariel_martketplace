@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs';
 import { Logotipo } from '../../../auth/logotipo';
 import { AuthService } from '../../../auth/auth.service';
 import {
@@ -113,10 +114,7 @@ export class CompradorPanel implements OnInit {
       return;
     }
     this.cargarProductos();
-    this.cargarPerfil();
     this.cargarCategorias();
-    this.cargarCarrito();
-    this.cargarNotificaciones();
   }
 
   protected cargarProductos(): void {
@@ -131,13 +129,15 @@ export class CompradorPanel implements OnInit {
         nombre: this.terminoBusqueda.trim(),
         orden: this.filtro.orden,
       })
+      .pipe(finalize(() => {
+        this.cargando = false;
+      }))
       .subscribe({
         next: (datos) => {
           this.productos = datos;
-          this.cargando = false;
+          this.errorCarga = '';
         },
         error: () => {
-          this.cargando = false;
           this.errorCarga = 'No se pudieron cargar los productos.';
         },
       });
@@ -182,7 +182,9 @@ export class CompradorPanel implements OnInit {
 
   protected alternarMenu(): void {
     this.menuAbierto = !this.menuAbierto;
-    if (!this.menuAbierto) {
+    if (this.menuAbierto) {
+      this.cargarPerfil();
+    } else {
       this.editandoPerfil = false;
     }
     this.filtrosAbiertos = false;
@@ -354,6 +356,9 @@ export class CompradorPanel implements OnInit {
 
   protected alternarCarrito(): void {
     this.carritoAbierto = !this.carritoAbierto;
+    if (this.carritoAbierto) {
+      this.cargarCarrito();
+    }
     this.mensajePago = '';
     this.mensajeCart = '';
     this.menuAbierto = false;
@@ -382,16 +387,18 @@ export class CompradorPanel implements OnInit {
     const token = this.token;
     this.cargandoPedidos = true;
     this.mensajePedidos = '';
-    this.servicio.misPedidos(token).subscribe({
-      next: (pedidos) => {
+    this.servicio.misPedidos(token)
+      .pipe(finalize(() => {
         this.cargandoPedidos = false;
-        this.pedidos = pedidos;
-      },
-      error: () => {
-        this.cargandoPedidos = false;
-        this.mensajePedidos = 'No se pudieron cargar tus pedidos.';
-      },
-    });
+      }))
+      .subscribe({
+        next: (pedidos) => {
+          this.pedidos = pedidos;
+        },
+        error: () => {
+          this.mensajePedidos = 'No se pudieron cargar tus pedidos.';
+        },
+      });
   }
 
   protected abrirPedido(pedido: PedidoResumen): void {
@@ -437,20 +444,22 @@ export class CompradorPanel implements OnInit {
     this.cargandoNotificaciones = true;
     this.mensajeNotificaciones = '';
 
-    this.servicio.notificaciones(token).subscribe({
-      next: (respuesta) => {
+    this.servicio.notificaciones(token)
+      .pipe(finalize(() => {
         this.cargandoNotificaciones = false;
-        this.notificaciones = respuesta.notificaciones.map((notificacion) => ({
-          ...notificacion,
-          leida: this.notificacionLeida(notificacion),
-        }));
-        this.noLeidasNotificaciones = Number(respuesta.no_leidas || 0);
-      },
-      error: () => {
-        this.cargandoNotificaciones = false;
-        this.mensajeNotificaciones = 'No se pudieron cargar las notificaciones.';
-      },
-    });
+      }))
+      .subscribe({
+        next: (respuesta) => {
+          this.notificaciones = respuesta.notificaciones.map((notificacion) => ({
+            ...notificacion,
+            leida: this.notificacionLeida(notificacion),
+          }));
+          this.noLeidasNotificaciones = Number(respuesta.no_leidas || 0);
+        },
+        error: () => {
+          this.mensajeNotificaciones = 'No se pudieron cargar las notificaciones.';
+        },
+      });
   }
 
   protected notificacionLeida(n: Notificacion): boolean {

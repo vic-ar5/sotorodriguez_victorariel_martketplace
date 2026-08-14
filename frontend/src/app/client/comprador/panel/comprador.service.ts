@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 
-const API_URL = 'http://127.0.0.1:8080/api';
+const API_URL = 'http://localhost:8000/api';
 
 export interface Producto {
   id_producto: number;
