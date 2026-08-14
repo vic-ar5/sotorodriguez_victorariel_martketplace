@@ -41,6 +41,10 @@ export class AuthService {
     return localStorage.getItem('shoptify_token');
   }
 
+  eliminarToken(): void {
+    localStorage.removeItem('shoptify_token');
+  }
+
   rutaSegunRol(token: string): string {
     try {
       const payload = JSON.parse(
