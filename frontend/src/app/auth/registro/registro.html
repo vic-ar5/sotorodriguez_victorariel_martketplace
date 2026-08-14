@@ -16,6 +16,7 @@
           autocomplete="username"
           placeholder="Nombre de usuario"
           maxlength="50"
+          (beforeinput)="bloquearCaracteres('nombre_usuario', permitidosUsuario, $event)"
         />
         @if (mensajeError('nombre_usuario')) {
           <span class="error">{{ mensajeError('nombre_usuario') }}</span>
@@ -46,6 +47,7 @@
           autocomplete="new-password"
           placeholder="Mínimo 8 caracteres"
           maxlength="255"
+          (beforeinput)="bloquearCaracteres('contrasena', permitidosPassword, $event)"
         />
         @if (mensajeError('contrasena')) {
           <span class="error">{{ mensajeError('contrasena') }}</span>
@@ -62,6 +64,7 @@
             autocomplete="given-name"
             placeholder="Nombre"
             maxlength="80"
+            (beforeinput)="bloquearCaracteres('nombre', permitidosNombre, $event)"
           />
           @if (mensajeError('nombre')) {
             <span class="error">{{ mensajeError('nombre') }}</span>
@@ -77,6 +80,7 @@
             autocomplete="family-name"
             placeholder="Apellido paterno"
             maxlength="80"
+            (beforeinput)="bloquearCaracteres('apellido_paterno', permitidosNombre, $event)"
           />
           @if (mensajeError('apellido_paterno')) {
             <span class="error">{{ mensajeError('apellido_paterno') }}</span>
@@ -93,6 +97,7 @@
             formControlName="apellido_materno"
             placeholder="Apellido materno (opcional)"
             maxlength="80"
+            (beforeinput)="bloquearCaracteres('apellido_materno', permitidosNombre, $event)"
           />
           @if (mensajeError('apellido_materno')) {
             <span class="error">{{ mensajeError('apellido_materno') }}</span>
@@ -109,6 +114,7 @@
             inputmode="numeric"
             placeholder="10 dígitos (opcional)"
             maxlength="10"
+            (beforeinput)="bloquearCaracteres('telefono', permitidosDigito, $event)"
           />
           @if (mensajeError('telefono')) {
             <span class="error">{{ mensajeError('telefono') }}</span>

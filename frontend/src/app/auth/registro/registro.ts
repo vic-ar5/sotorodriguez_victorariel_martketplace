@@ -5,6 +5,10 @@ import { AuthService } from '../auth.service';
 import { Logotipo } from '../logotipo';
 
 const TELEFONO_MEXICO = /^[0-9]{10}$/;
+const NOMBRE_LETRAS = /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ ]+$/;
+const USUARIO_ALFANUMERICO = /^[a-zA-Z0-9_]+$/;
+const SIN_ESPACIOS = /^\S+$/;
+const DIGITO = /^[0-9]$/;
 
 @Component({
   selector: 'app-registro',
@@ -18,20 +22,88 @@ export class Registro {
   private readonly auth = inject(AuthService);
 
   protected readonly formulario = this.fb.nonNullable.group({
-    nombre_usuario: ['', [Validators.required, Validators.maxLength(50)]],
+    nombre_usuario: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(50),
+        Validators.pattern(USUARIO_ALFANUMERICO),
+      ],
+    ],
     correo: [
       '',
       [Validators.required, Validators.email, Validators.maxLength(150)],
     ],
-    contrasena: ['', [Validators.required, Validators.minLength(8)]],
-    nombre: ['', [Validators.required, Validators.maxLength(80)]],
-    apellido_paterno: ['', [Validators.required, Validators.maxLength(80)]],
-    apellido_materno: ['', [Validators.maxLength(80)]],
+    contrasena: [
+      '',
+      [
+        Validators.required,
+        Validators.minLength(8),
+        Validators.pattern(SIN_ESPACIOS),
+      ],
+    ],
+    nombre: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(80),
+        Validators.pattern(NOMBRE_LETRAS),
+      ],
+    ],
+    apellido_paterno: [
+      '',
+      [
+        Validators.required,
+        Validators.maxLength(80),
+        Validators.pattern(NOMBRE_LETRAS),
+      ],
+    ],
+    apellido_materno: [
+      '',
+      [Validators.maxLength(80), Validators.pattern(NOMBRE_LETRAS)],
+    ],
     telefono: ['', [Validators.pattern(TELEFONO_MEXICO)]],
   });
 
   protected cargando = false;
   protected error = '';
+
+  protected readonly permitidosNombre = NOMBRE_LETRAS;
+  protected readonly permitidosUsuario = USUARIO_ALFANUMERICO;
+  protected readonly permitidosPassword = SIN_ESPACIOS;
+  protected readonly permitidosDigito = DIGITO;
+
+  protected bloquearCaracteres(
+    campo: string,
+    permitidos: RegExp,
+    event: Event,
+  ): void {
+    const antes = event as InputEvent;
+    const texto = antes.data ?? antes.dataTransfer?.getData('text') ?? '';
+    if (!texto) {
+      return;
+    }
+
+    const filtrado = [...texto].filter((c) => permitidos.test(c)).join('');
+    if (filtrado === texto) {
+      return;
+    }
+
+    antes.preventDefault();
+
+    if (!filtrado) {
+      return;
+    }
+
+    const input = event.target as HTMLInputElement;
+    const inicio = input.selectionStart ?? input.value.length;
+    const fin = input.selectionEnd ?? inicio;
+    const valor =
+      input.value.slice(0, inicio) + filtrado + input.value.slice(fin);
+
+    this.formulario.controls[campo].setValue(valor);
+    input.setSelectionRange(inicio + filtrado.length, inicio + filtrado.length);
+  }
 
   protected enviar(): void {
     this.formulario.markAllAsTouched();
@@ -88,7 +160,16 @@ export class Registro {
       return `Máximo ${error.requiredLength} caracteres.`;
     }
     if (control.hasError('pattern')) {
-      return 'Ingresa 10 dígitos numéricos.';
+      switch (campo) {
+        case 'telefono':
+          return 'Ingresa 10 dígitos numéricos.';
+        case 'nombre_usuario':
+          return 'Solo letras, números y guion bajo.';
+        case 'contrasena':
+          return 'La contraseña no puede contener espacios.';
+        default:
+          return 'Solo se permiten letras.';
+      }
     }
     return '';
   }

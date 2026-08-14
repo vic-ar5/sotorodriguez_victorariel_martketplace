@@ -4,6 +4,8 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../auth.service';
 import { Logotipo } from '../logotipo';
 
+const SIN_ESPACIOS = /^\S+$/;
+
 @Component({
   selector: 'app-login',
   imports: [ReactiveFormsModule, RouterLink, Logotipo],
@@ -20,12 +22,46 @@ export class Login {
       '',
       [Validators.required, Validators.email, Validators.maxLength(150)],
     ],
-    contrasena: ['', [Validators.required]],
+    contrasena: ['', [Validators.required, Validators.pattern(SIN_ESPACIOS)]],
   });
 
   protected cargando = false;
   protected error = '';
   protected cuentaCreada = false;
+
+  protected readonly permitidosPassword = SIN_ESPACIOS;
+
+  protected bloquearCaracteres(
+    campo: string,
+    permitidos: RegExp,
+    event: Event,
+  ): void {
+    const antes = event as InputEvent;
+    const texto = antes.data ?? antes.dataTransfer?.getData('text') ?? '';
+    if (!texto) {
+      return;
+    }
+
+    const filtrado = [...texto].filter((c) => permitidos.test(c)).join('');
+    if (filtrado === texto) {
+      return;
+    }
+
+    antes.preventDefault();
+
+    if (!filtrado) {
+      return;
+    }
+
+    const input = event.target as HTMLInputElement;
+    const inicio = input.selectionStart ?? input.value.length;
+    const fin = input.selectionEnd ?? inicio;
+    const valor =
+      input.value.slice(0, inicio) + filtrado + input.value.slice(fin);
+
+    this.formulario.controls[campo].setValue(valor);
+    input.setSelectionRange(inicio + filtrado.length, inicio + filtrado.length);
+  }
 
   constructor() {
     this.cuentaCreada =
@@ -72,6 +108,9 @@ export class Login {
         requiredLength: number;
       };
       return `Máximo ${error.requiredLength} caracteres.`;
+    }
+    if (control.hasError('pattern')) {
+      return 'La contraseña no puede contener espacios.';
     }
     return '';
   }

@@ -46,6 +46,7 @@
           formControlName="contrasena"
           autocomplete="current-password"
           placeholder="Tu contraseña"
+          (beforeinput)="bloquearCaracteres('contrasena', permitidosPassword, $event)"
         />
         @if (mensajeError('contrasena')) {
           <span class="error">{{ mensajeError('contrasena') }}</span>
