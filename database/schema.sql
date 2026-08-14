@@ -106,6 +106,21 @@ CREATE TABLE direcciones (
     fecha_registro  TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Catálogo de códigos postales (autocompletado de direcciones sin API)
+CREATE TABLE codigos_postales (
+    id_codigo_postal SERIAL PRIMARY KEY,
+    codigo_postal   CHAR(5)      NOT NULL
+        CHECK (codigo_postal ~ '^[0-9]{5}$'),        -- CP mexicano
+    colonia         VARCHAR(120) NOT NULL,
+    municipio       VARCHAR(120) NOT NULL,
+    id_estado       INT          NOT NULL
+        REFERENCES estados_mexico (id_estado) ON UPDATE CASCADE ON DELETE RESTRICT,
+    UNIQUE (codigo_postal, colonia)
+);
+
+CREATE INDEX idx_codigos_postales_cp      ON codigos_postales (codigo_postal);
+CREATE INDEX idx_codigos_postales_estado  ON codigos_postales (id_estado);
+
 -- =====================================================================
 -- 3. PRODUCTOS E IMÁGENES
 -- =====================================================================

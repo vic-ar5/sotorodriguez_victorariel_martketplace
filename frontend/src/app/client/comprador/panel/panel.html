@@ -325,3 +325,243 @@
     </div>
   </div>
 }
+
+@if (pagoAbierto) {
+  <div class="fondo-modal" (click)="cerrarPago()">
+    <div class="modal-pago" (click)="$event.stopPropagation()">
+      <div class="cabecera-modal">
+        <h2>Completar compra</h2>
+        <button type="button" class="btn-cerrar-modal" (click)="cerrarPago()" aria-label="Cerrar">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+
+      <p class="subcabecera-pago">Elige o agrega la dirección donde quieres recibir tu pedido. Quedará guardada para tus próximas compras.</p>
+
+      @if (mensajeDireccion) {
+        <p class="mensaje-error-pago">{{ mensajeDireccion }}</p>
+      }
+
+      @if (!mostrandoNuevaDireccion) {
+        <div class="lista-direcciones">
+          @for (direccion of direcciones; track direccion.id_direccion) {
+            <label
+              class="tarjeta-direccion"
+              [class.seleccionada]="direccion.id_direccion === direccionSeleccionadaId"
+            >
+              <input
+                type="radio"
+                name="direccion-radio"
+                [value]="direccion.id_direccion"
+                [checked]="direccion.id_direccion === direccionSeleccionadaId"
+                (change)="seleccionarDireccion(direccion.id_direccion)"
+              />
+              <div class="info-direccion">
+                <div class="nombre-direccion">
+                  <strong>{{ direccion.nombre }}</strong>
+                  @if (esPrincipal(direccion)) {
+                    <span class="badge-principal">Principal</span>
+                  }
+                </div>
+                <p>{{ direccion.calle }} {{ direccion.numero_exterior }}@if (direccion.numero_interior) { int. {{ direccion.numero_interior }} }</p>
+                <p>{{ direccion.colonia }}, {{ direccion.municipio }}, {{ direccion.estado }} · CP {{ direccion.codigo_postal }}</p>
+              </div>
+              <div class="acciones-direccion">
+                <button type="button" class="btn-mini" (click)="editarDireccion(direccion)">Editar</button>
+                @if (!esPrincipal(direccion)) {
+                  <button type="button" class="btn-mini" (click)="establecerPrincipal(direccion)">Hacer principal</button>
+                }
+                <button type="button" class="btn-mini-eliminar" (click)="eliminarDireccion(direccion)">Eliminar</button>
+              </div>
+            </label>
+          } @empty {
+            <p class="sin-direcciones">Aún no tienes direcciones guardadas. Agrega la primera para continuar.</p>
+          }
+        </div>
+
+        <button type="button" class="btn btn-agregar-direccion" (click)="alternarNuevaDireccion()">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Agregar nueva dirección
+        </button>
+      } @else {
+        <div class="formulario-direccion">
+          <h3 class="titulo-formulario">{{ editandoDireccionId ? 'Editar dirección' : 'Nueva dirección' }}</h3>
+
+          <div class="campo">
+            <label for="dir-nombre">Nombre de la dirección</label>
+            <input id="dir-nombre" type="text" [(ngModel)]="nuevaDireccion.nombre" placeholder="Ej. Casa, Oficina" />
+          </div>
+
+          <div class="campo">
+            <label for="dir-cp">Código Postal</label>
+            <input
+              id="dir-cp"
+              type="text"
+              inputmode="numeric"
+              maxlength="5"
+              [(ngModel)]="nuevaDireccion.codigo_postal"
+              (blur)="buscarColonias()"
+              placeholder="Ej. 66220"
+            />
+            <p class="ayuda-campo">Al salir del campo se buscarán las colonias del catálogo de códigos postales.</p>
+          </div>
+
+          @if (cargandoCp) {
+            <p class="mensaje-cp">Buscando asentamientos…</p>
+          } @else if (coloniasCp.length > 0) {
+            <div class="lista-colonias">
+              @for (asentamiento of coloniasCp; track asentamiento.colonia) {
+                <button type="button" class="opcion-colonia" (click)="seleccionarColonia(asentamiento)">
+                  {{ asentamiento.colonia }} — {{ asentamiento.municipio }}, {{ asentamiento.estado }}
+                </button>
+              }
+            </div>
+          }
+          @if (mensajeCp) {
+            <p class="mensaje-cp">{{ mensajeCp }}</p>
+          }
+
+          <div class="campo">
+            <label for="dir-colonia">Colonia</label>
+            <input id="dir-colonia" type="text" [(ngModel)]="nuevaDireccion.colonia" />
+          </div>
+
+          <div class="campo">
+            <label for="dir-calle">Calle</label>
+            <input id="dir-calle" type="text" [(ngModel)]="nuevaDireccion.calle" />
+          </div>
+
+          <div class="fila-campos">
+            <div class="campo">
+              <label for="dir-ext">Número exterior</label>
+              <input id="dir-ext" type="text" [(ngModel)]="nuevaDireccion.numero_exterior" />
+            </div>
+            <div class="campo">
+              <label for="dir-int">Número interior (opcional)</label>
+              <input id="dir-int" type="text" [(ngModel)]="nuevaDireccion.numero_interior" />
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="dir-municipio">Municipio</label>
+            <input id="dir-municipio" type="text" [(ngModel)]="nuevaDireccion.municipio" />
+          </div>
+
+          <div class="campo">
+            <label for="dir-estado">Estado</label>
+            <input id="dir-estado" type="text" list="lista-estados" [(ngModel)]="nuevaDireccion.estado" placeholder="Selecciona o escribe el estado" />
+            <datalist id="lista-estados">
+              @for (estado of estadosMx; track estado.id_estado) {
+                <option [value]="estado.nombre"></option>
+              }
+            </datalist>
+          </div>
+
+          <div class="acciones-formulario">
+            <button type="button" class="btn btn-aceptar" (click)="guardarNuevaDireccion()">
+              {{ editandoDireccionId ? 'Guardar cambios' : 'Guardar dirección' }}
+            </button>
+            <button type="button" class="btn btn-eliminar" (click)="alternarNuevaDireccion()">Cancelar</button>
+          </div>
+        </div>
+      }
+
+      <div class="pie-pago">
+        <p class="total-pagar">Total a pagar: <strong>{{ formatearPrecio(carrito.total) }}</strong></p>
+        <button
+          type="button"
+          class="btn btn-aceptar"
+          [disabled]="procesandoPago || !direccionSeleccionadaId"
+          (click)="confirmarPago()"
+        >
+          {{ procesandoPago ? 'Procesando pago…' : 'Pagar ahora' }}
+        </button>
+      </div>
+
+      @if (mensajePago) {
+        <p class="mensaje-error-pago">{{ mensajePago }}</p>
+      }
+    </div>
+  </div>
+}
+
+@if (recibo && reciboAbierto) {
+  <div class="fondo-modal" (click)="cerrarRecibo()">
+    <div class="modal-recibo" (click)="$event.stopPropagation()">
+      <div class="encabezado-recibo">
+        <div class="logotipo-recibo">
+          <app-logotipo />
+        </div>
+        <div class="datos-recibo">
+          <p class="folio-recibo">Folio: <strong>{{ recibo.numero_pedido }}</strong></p>
+          <p class="fecha-recibo">{{ formatearFecha(recibo.fecha_pedido) }}</p>
+        </div>
+      </div>
+
+      <div class="info-recibo">
+        <div class="bloque-comprador">
+          <h3>Comprador</h3>
+          <p>{{ recibo.persona }}</p>
+        </div>
+        <div class="bloque-direccion">
+          <h3>Dirección de envío</h3>
+          <p>{{ recibo.direccion.nombre }} — {{ recibo.direccion.calle }} {{ recibo.direccion.numero_exterior }}@if (recibo.direccion.numero_interior) { int. {{ recibo.direccion.numero_interior }} }</p>
+          <p>{{ recibo.direccion.colonia }}, {{ recibo.direccion.municipio }}, {{ recibo.direccion.estado }}</p>
+          <p>CP {{ recibo.direccion.codigo_postal }} · {{ recibo.direccion.pais }}</p>
+        </div>
+      </div>
+
+      <div class="tabla-recibo">
+        <table>
+          <thead>
+            <tr>
+              <th>Identificador</th>
+              <th>Producto</th>
+              <th class="al-derecha">Cantidad</th>
+              <th class="al-derecha">Precio unitario</th>
+              <th class="al-derecha">Total del producto</th>
+              <th>Vendedor</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of recibo.detalle; track item.id_producto) {
+              <tr>
+                <td>{{ item.identificador }}</td>
+                <td>{{ item.nombre }}</td>
+                <td class="al-derecha">{{ item.cantidad }}</td>
+                <td class="al-derecha">{{ formatearPrecio(item.precio_unitario) }}</td>
+                <td class="al-derecha">{{ formatearPrecio(item.subtotal) }}</td>
+                <td>{{ item.vendedor }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="totales-recibo">
+        <p class="linea-total"><span>Subtotal</span><span>{{ formatearPrecio(recibo.total) }}</span></p>
+        <p class="linea-total total-recibo"><span>Total</span><span>{{ formatearPrecio(recibo.total) }}</span></p>
+      </div>
+
+      <div class="pie-recibo">
+        <p class="estado-recibo">Estado del pedido: <strong>{{ recibo.estado }}</strong></p>
+        <div class="acciones-recibo">
+          @if (recibo.estado === 'Pendiente') {
+            <button
+              type="button"
+              class="btn btn-aceptar"
+              [disabled]="procesandoPago"
+              (click)="confirmarPagoRecibo()"
+            >
+              {{ procesandoPago ? 'Confirmando…' : 'Confirmar pago' }}
+            </button>
+          }
+          <button type="button" class="btn btn-eliminar" (click)="cerrarRecibo()">Cerrar</button>
+        </div>
+      </div>
+      @if (mensajeRecibo) {
+        <p class="mensaje-error-pago">{{ mensajeRecibo }}</p>
+      }
+    </div>
+  </div>
+}

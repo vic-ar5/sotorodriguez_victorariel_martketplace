@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 const API_URL = 'http://127.0.0.1:8080/api';
 
@@ -64,6 +64,82 @@ export interface MiPerfil {
   apellido_paterno: string;
   apellido_materno: string | null;
   telefono: string | null;
+}
+
+export interface Direccion {
+  id_direccion: number;
+  nombre: string;
+  calle: string;
+  numero_exterior: string;
+  numero_interior: string | null;
+  colonia: string;
+  codigo_postal: string;
+  municipio: string;
+  estado: string;
+  pais: string;
+  es_principal: boolean | string;
+}
+
+export interface DireccionDatos {
+  nombre: string;
+  calle: string;
+  numero_exterior: string;
+  numero_interior?: string | null;
+  colonia: string;
+  codigo_postal: string;
+  municipio: string;
+  estado?: string;
+  id_estado?: number;
+  es_principal?: boolean;
+}
+
+export interface AsentamientoCp {
+  colonia: string;
+  municipio: string;
+  estado: string;
+  codigo_postal: string;
+}
+
+export interface ColoniasResponse {
+  codigo_postal: string;
+  asentamientos: AsentamientoCp[];
+}
+
+export interface EstadoMx {
+  id_estado: number;
+  nombre: string;
+}
+
+export interface ItemRecibo {
+  id_producto: number;
+  identificador: string;
+  nombre: string;
+  cantidad: number;
+  precio_unitario: string | number;
+  subtotal: string | number;
+  vendedor: string;
+}
+
+export interface Recibo {
+  id_pedido: number;
+  numero_pedido: string;
+  fecha_pedido: string;
+  total: string | number;
+  moneda: string;
+  estado: string;
+  persona: string;
+  direccion: {
+    nombre: string;
+    calle: string;
+    numero_exterior: string;
+    numero_interior: string | null;
+    colonia: string;
+    codigo_postal: string;
+    municipio: string;
+    estado: string;
+    pais: string;
+  };
+  detalle: ItemRecibo[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -155,6 +231,82 @@ export class CompradorService {
     return this.http.patch(
       `${API_URL}/carrito/items/${idProducto}`,
       { cantidad },
+      { headers: this.headers(token) },
+    );
+  }
+
+  direcciones(token: string): Observable<Direccion[]> {
+    return this.http.get<Direccion[]>(`${API_URL}/direcciones`, {
+      headers: this.headers(token),
+    });
+  }
+
+  crearDireccion(token: string, datos: DireccionDatos): Observable<Direccion> {
+    return this.http.post<Direccion>(`${API_URL}/direcciones`, datos, {
+      headers: this.headers(token),
+    });
+  }
+
+  actualizarDireccion(
+    token: string,
+    idDireccion: number,
+    datos: DireccionDatos,
+  ): Observable<Direccion> {
+    return this.http.put<Direccion>(
+      `${API_URL}/direcciones/${idDireccion}`,
+      datos,
+      { headers: this.headers(token) },
+    );
+  }
+
+  eliminarDireccion(token: string, idDireccion: number): Observable<unknown> {
+    return this.http.delete(`${API_URL}/direcciones/${idDireccion}`, {
+      headers: this.headers(token),
+    });
+  }
+
+  establecerDireccionPrincipal(token: string, idDireccion: number): Observable<unknown> {
+    return this.http.post(
+      `${API_URL}/direcciones/${idDireccion}/principal`,
+      {},
+      { headers: this.headers(token) },
+    );
+  }
+
+  coloniasPorCp(token: string, codigoPostal: string): Observable<AsentamientoCp[]> {
+    return this.http
+      .get<ColoniasResponse>(
+        `${API_URL}/cp-mx/colonias`,
+        {
+          params: { codigo_postal: codigoPostal },
+          headers: this.headers(token),
+        },
+      )
+      .pipe(map((respuesta) => respuesta.asentamientos));
+  }
+
+  estados(): Observable<EstadoMx[]> {
+    return this.http.get<EstadoMx[]>(`${API_URL}/estados-mexico`);
+  }
+
+  crearPedido(token: string, idDireccion: number): Observable<{ id_pedido: number }> {
+    return this.http.post<{ id_pedido: number }>(
+      `${API_URL}/pedidos`,
+      { id_direccion: idDireccion },
+      { headers: this.headers(token) },
+    );
+  }
+
+  recibo(token: string, idPedido: number): Observable<Recibo> {
+    return this.http.get<Recibo>(`${API_URL}/pedidos/${idPedido}`, {
+      headers: this.headers(token),
+    });
+  }
+
+  confirmarPago(token: string, idPedido: number): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(
+      `${API_URL}/pedidos/${idPedido}/confirmar`,
+      {},
       { headers: this.headers(token) },
     );
   }

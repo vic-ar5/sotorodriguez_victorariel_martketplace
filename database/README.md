@@ -6,6 +6,7 @@ Esquema PostgreSQL para el marketplace mexicano (Examen Ordinario Unidad 3).
 
 - `schema.sql` — crea tablas, restricciones, índices, triggers y datos semilla.
 - `semillas.sql` — datos de ejemplo (roles, estados, categorías, usuarios, productos, carrito y pedidos).
+- `codigos_postales.sql` — catálogo de códigos postales MX para autocompletar direcciones (sin API externa).
 - `consultas.sql` — todas las consultas del sistema (comprador y administrador) con filtros combinados.
 
 ## Tablas
@@ -19,6 +20,7 @@ Esquema PostgreSQL para el marketplace mexicano (Examen Ordinario Unidad 3).
 | `usuario` | Credenciales de acceso (nombre_usuario, correo, hash bcrypt) |
 | `persona` | Datos personales del usuario (1:1); llama a sus direcciones |
 | `direcciones` | Direcciones de entrega de la persona (CP MX, estado, país = México) |
+| `codigos_postales` | Catálogo CP MX → colonia, municipio, estado (autocompletado sin API) |
 | `productos` | Productos (precio MXN, existencia, estado, vendedor) |
 | `imagenes` | Metadatos de la imagen en Google Drive (nunca el archivo) |
 | `carrito` | Carrito activo por comprador |
@@ -43,6 +45,7 @@ createdb -U postgres marketplace
 # Aplica el esquema y luego los datos de ejemplo
 psql -U postgres -d marketplace -f database/schema.sql
 psql -U postgres -d marketplace -f database/semillas.sql
+psql -U postgres -d marketplace -f database/codigos_postales.sql
 ```
 
 Los usuarios de ejemplo usan la contraseña `password` (hash bcrypt válido).

@@ -48,6 +48,32 @@ class PedidoController
         Flight::json($this->modelo->ConsultarPedidosDelComprador((int) $usuario['sub']));
     }
 
+    public function confirmarPago(): void
+    {
+        $usuario = AuthGuard::requireRol('comprador');
+
+        $idPedido = (int) Http::param('id');
+
+        if ($idPedido < 1) {
+            Flight::json(['error' => 'Id de pedido inválido'], 422);
+            return;
+        }
+
+        $resultado = $this->modelo->ConfirmarPago((int) $usuario['sub'], $idPedido);
+
+        if (!$resultado['ok']) {
+            if ($resultado['error'] === 'no_encontrado') {
+                Flight::json(['error' => 'Pedido no encontrado'], 404);
+                return;
+            }
+
+            Flight::json(['error' => 'El pedido no se puede confirmar'], 422);
+            return;
+        }
+
+        Flight::json(['mensaje' => 'Pago confirmado']);
+    }
+
     public function detallePropio(): void
     {
         $usuario = AuthGuard::requireRol('comprador');
