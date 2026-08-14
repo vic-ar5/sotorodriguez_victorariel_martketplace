@@ -73,6 +73,11 @@ export class Registro {
 
   protected cargando = false;
   protected error = '';
+  protected mostrarContrasena = false;
+
+  protected alternarContrasena(): void {
+    this.mostrarContrasena = !this.mostrarContrasena;
+  }
 
   protected readonly permitidosNombre = NOMBRE_LETRAS;
   protected readonly permitidosUsuario = USUARIO_ALFANUMERICO;

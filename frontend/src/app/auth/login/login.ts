@@ -34,6 +34,11 @@ export class Login {
   protected cargando = false;
   protected error = '';
   protected cuentaCreada = false;
+  protected mostrarContrasena = false;
+
+  protected alternarContrasena(): void {
+    this.mostrarContrasena = !this.mostrarContrasena;
+  }
 
   protected readonly permitidosPassword = SIN_ESPACIOS;
   protected readonly permitidosCorreo = CARACTERES_CORREO;
