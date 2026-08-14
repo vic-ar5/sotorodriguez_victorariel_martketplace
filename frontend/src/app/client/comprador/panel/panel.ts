@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Logotipo } from '../../../auth/logotipo';
 import { AuthService } from '../../../auth/auth.service';
 import {
+  Categoria,
   CompradorService,
   DetalleProducto,
   MiPerfil,
@@ -27,6 +28,16 @@ export class CompradorPanel implements OnInit {
   protected errorCarga = '';
   protected terminoBusqueda = '';
 
+  protected filtrosAbiertos = false;
+  protected categorias: Categoria[] = [];
+  protected filtro = {
+    id_categoria: '',
+    precio_min: '',
+    precio_max: '',
+    disponibilidad: '',
+    orden: '',
+  };
+
   protected menuAbierto = false;
   protected perfil: MiPerfil | null = null;
   protected editandoPerfil = false;
@@ -45,41 +56,68 @@ export class CompradorPanel implements OnInit {
     }
     this.cargarProductos();
     this.cargarPerfil();
+    this.cargarCategorias();
   }
 
   protected cargarProductos(): void {
     this.cargando = true;
     this.errorCarga = '';
-    this.servicio.productos().subscribe({
-      next: (datos) => {
-        this.productos = datos;
-        this.cargando = false;
+    this.servicio
+      .filtrarProductos({
+        id_categoria: this.filtro.id_categoria,
+        precio_min: this.filtro.precio_min,
+        precio_max: this.filtro.precio_max,
+        disponibilidad: this.filtro.disponibilidad,
+        nombre: this.terminoBusqueda.trim(),
+        orden: this.filtro.orden,
+      })
+      .subscribe({
+        next: (datos) => {
+          this.productos = datos;
+          this.cargando = false;
+        },
+        error: () => {
+          this.cargando = false;
+          this.errorCarga = 'No se pudieron cargar los productos.';
+        },
+      });
+  }
+
+  protected cargarCategorias(): void {
+    this.servicio.categorias().subscribe({
+      next: (categorias) => {
+        this.categorias = categorias;
       },
       error: () => {
-        this.cargando = false;
-        this.errorCarga = 'No se pudieron cargar los productos.';
+        // Si falla, el filtro de categoría simplemente queda vacío.
       },
     });
   }
 
+  protected alternarFiltros(): void {
+    this.filtrosAbiertos = !this.filtrosAbiertos;
+    this.menuAbierto = false;
+    this.editandoPerfil = false;
+  }
+
+  protected aplicarFiltros(): void {
+    this.filtrosAbiertos = false;
+    this.cargarProductos();
+  }
+
+  protected limpiarFiltros(): void {
+    this.filtro = {
+      id_categoria: '',
+      precio_min: '',
+      precio_max: '',
+      disponibilidad: '',
+      orden: '',
+    };
+    this.aplicarFiltros();
+  }
+
   protected buscar(): void {
-    const termino = this.terminoBusqueda.trim();
-    if (!termino) {
-      this.cargarProductos();
-      return;
-    }
-    this.cargando = true;
-    this.errorCarga = '';
-    this.servicio.buscarProductos(termino).subscribe({
-      next: (datos) => {
-        this.productos = datos;
-        this.cargando = false;
-      },
-      error: () => {
-        this.cargando = false;
-        this.errorCarga = 'No se pudieron cargar los productos.';
-      },
-    });
+    this.cargarProductos();
   }
 
   protected alternarMenu(): void {
@@ -87,6 +125,7 @@ export class CompradorPanel implements OnInit {
     if (!this.menuAbierto) {
       this.editandoPerfil = false;
     }
+    this.filtrosAbiertos = false;
   }
 
   protected cargarPerfil(): void {

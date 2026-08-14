@@ -11,6 +11,54 @@
       placeholder="Buscar productos..."
       aria-label="Buscar productos"
     />
+    <div class="contenedor-filtros">
+      <button type="button" class="btn-filtro" (click)="alternarFiltros()" aria-label="Filtrar">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+      </button>
+
+      @if (filtrosAbiertos) {
+        <div class="panel-filtros">
+          <label>
+            Categoría
+            <select [(ngModel)]="filtro.id_categoria">
+              <option value="">Todas</option>
+              @for (categoria of categorias; track categoria.id_categoria) {
+                <option [ngValue]="categoria.id_categoria.toString()">{{ categoria.nombre }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            Precio mínimo
+            <input type="number" min="0" step="0.01" [(ngModel)]="filtro.precio_min" placeholder="0" />
+          </label>
+          <label>
+            Precio máximo
+            <input type="number" min="0" step="0.01" [(ngModel)]="filtro.precio_max" placeholder="—" />
+          </label>
+          <label>
+            Disponibilidad
+            <select [(ngModel)]="filtro.disponibilidad">
+              <option value="">Todas</option>
+              <option value="disponible">Disponible</option>
+              <option value="agotado">Agotado</option>
+            </select>
+          </label>
+          <label>
+            Ordenar por precio
+            <select [(ngModel)]="filtro.orden">
+              <option value="">Sin orden</option>
+              <option value="precio_asc">Menor a mayor</option>
+              <option value="precio_desc">Mayor a menor</option>
+            </select>
+          </label>
+          <div class="acciones-filtros">
+            <button type="button" class="btn btn-aceptar" (click)="aplicarFiltros()">Aplicar</button>
+            <button type="button" class="btn btn-eliminar" (click)="limpiarFiltros()">Limpiar</button>
+          </div>
+        </div>
+      }
+    </div>
+
     <button type="button" (click)="buscar()" aria-label="Buscar">
       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
     </button>

@@ -19,42 +19,21 @@ class ProductoController
     }
 
     /**
-     * Catálogo público. Cada filtro del query string se despacha a su
-     * propia consulta; sin filtros se devuelve el catálogo completo.
-     * ?id_categoria=&precio_min=&precio_max=&nombre=&disponibilidad=
+     * Catálogo público con filtros combinables.
+     * ?id_categoria=&precio_min=&precio_max=&nombre=&disponibilidad=&orden=
      */
     public function index(): void
     {
-        $idCategoria = Http::query('id_categoria');
-        $precioMin = Http::query('precio_min');
-        $precioMax = Http::query('precio_max');
-        $nombre = Http::query('nombre');
-        $disponibilidad = Http::query('disponibilidad');
+        $filtros = [
+            'id_categoria'   => (string) Http::query('id_categoria', ''),
+            'precio_min'     => (string) Http::query('precio_min', ''),
+            'precio_max'     => (string) Http::query('precio_max', ''),
+            'nombre'         => (string) Http::query('nombre', ''),
+            'disponibilidad' => (string) Http::query('disponibilidad', ''),
+            'orden'          => (string) Http::query('orden', ''),
+        ];
 
-        if ($idCategoria !== null && $idCategoria !== '') {
-            Flight::json($this->modelo->ConsultarPorCategoria((int) $idCategoria));
-            return;
-        }
-
-        if (($precioMin !== null && $precioMin !== '') || ($precioMax !== null && $precioMax !== '')) {
-            Flight::json($this->modelo->ConsultarPorRangoDePrecio(
-                $precioMin !== null && $precioMin !== '' ? (float) $precioMin : null,
-                $precioMax !== null && $precioMax !== '' ? (float) $precioMax : null,
-            ));
-            return;
-        }
-
-        if ($nombre !== null && $nombre !== '') {
-            Flight::json($this->modelo->ConsultarPorNombre($nombre));
-            return;
-        }
-
-        if ($disponibilidad === 'disponible' || $disponibilidad === 'agotado') {
-            Flight::json($this->modelo->ConsultarPorDisponibilidad($disponibilidad));
-            return;
-        }
-
-        Flight::json($this->modelo->ConsultaProductos());
+        Flight::json($this->modelo->ConsultarFiltrado($filtros));
     }
 
     public function show(): void

@@ -115,6 +115,57 @@ class ProductoModel
     }
 
     /**
+     * Catálogo público combinando varios filtros a la vez.
+     * $filtros admite: id_categoria, precio_min, precio_max, nombre,
+     * disponibilidad y orden (precio_asc | precio_desc).
+     */
+    public function ConsultarFiltrado(array $filtros): array
+    {
+        $condiciones = '';
+        $params = [];
+
+        if (isset($filtros['id_categoria']) && $filtros['id_categoria'] !== '') {
+            $condiciones .= " AND p.id_categoria = :id_categoria";
+            $params['id_categoria'] = (int) $filtros['id_categoria'];
+        }
+
+        if (isset($filtros['precio_min']) && $filtros['precio_min'] !== '') {
+            $condiciones .= " AND p.precio >= :precio_min";
+            $params['precio_min'] = (float) $filtros['precio_min'];
+        }
+
+        if (isset($filtros['precio_max']) && $filtros['precio_max'] !== '') {
+            $condiciones .= " AND p.precio <= :precio_max";
+            $params['precio_max'] = (float) $filtros['precio_max'];
+        }
+
+        if (isset($filtros['nombre']) && $filtros['nombre'] !== '') {
+            $condiciones .= " AND p.nombre ILIKE '%' || :nombre || '%'";
+            $params['nombre'] = $filtros['nombre'];
+        }
+
+        if (($filtros['disponibilidad'] ?? '') === 'disponible') {
+            $condiciones .= " AND p.existencia > 0";
+        } elseif (($filtros['disponibilidad'] ?? '') === 'agotado') {
+            $condiciones .= " AND p.existencia = 0";
+        }
+
+        $orden = 'p.nombre ASC';
+        $ordenFiltro = (string) ($filtros['orden'] ?? '');
+        if ($ordenFiltro === 'precio_asc') {
+            $orden = 'p.precio ASC';
+        } elseif ($ordenFiltro === 'precio_desc') {
+            $orden = 'p.precio DESC';
+        }
+
+        if ($condiciones === '' && $ordenFiltro === '') {
+            return $this->ConsultaProductos();
+        }
+
+        return $this->consultaBase($condiciones, $params, $orden);
+    }
+
+    /**
      * Detalle de un producto activo, incluyendo sus imágenes.
      */
     public function DetallesProducto(int $idProducto): ?array

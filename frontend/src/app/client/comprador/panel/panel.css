@@ -36,6 +36,80 @@
   margin: 0 auto;
 }
 
+/* ---------------------- Filtros (embudo) ---------------------- */
+.contenedor-filtros {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.buscador .btn-filtro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.5rem;
+  border: none;
+  border-left: 1px solid var(--gris-borde);
+  border-radius: 0;
+  background-color: transparent;
+  color: var(--azul-principal);
+  cursor: pointer;
+}
+
+.buscador .btn-filtro:hover {
+  color: var(--azul-hover);
+}
+
+.panel-filtros {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: 0;
+  width: 280px;
+  padding: 1.25rem;
+  background-color: var(--blanco);
+  border: 1px solid var(--gris-borde);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(30, 77, 130, 0.2);
+  color: var(--texto);
+  z-index: 60;
+}
+
+.panel-filtros label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.panel-filtros input,
+.panel-filtros select {
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--gris-borde);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+  background-color: var(--blanco);
+  color: var(--texto);
+}
+
+.panel-filtros input:focus,
+.panel-filtros select:focus {
+  border-color: var(--azul-hover);
+  box-shadow: 0 0 0 3px var(--azul-claro);
+}
+
+.acciones-filtros {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+.acciones-filtros .btn {
+  flex: 1;
+}
+
 /* ---------------------- Acciones (cuenta y carrito) ---------------------- */
 .acciones {
   display: flex;

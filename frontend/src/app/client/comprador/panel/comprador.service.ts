@@ -16,6 +16,13 @@ export interface Producto {
   imagen: string | null;
 }
 
+export interface Categoria {
+  id_categoria: number;
+  nombre: string;
+  descripcion: string;
+  activo: boolean;
+}
+
 export interface DetalleProducto {
   id_producto: number;
   identificador: string;
@@ -55,6 +62,27 @@ export class CompradorService {
     return this.http.get<Producto[]>(`${API_URL}/productos`, {
       params: { nombre },
     });
+  }
+
+  categorias(): Observable<Categoria[]> {
+    return this.http.get<Categoria[]>(`${API_URL}/categorias`);
+  }
+
+  filtrarProductos(filtros: {
+    id_categoria?: string;
+    precio_min?: string;
+    precio_max?: string;
+    nombre?: string;
+    disponibilidad?: string;
+    orden?: string;
+  }): Observable<Producto[]> {
+    const params: Record<string, string> = {};
+    for (const [clave, valor] of Object.entries(filtros)) {
+      if (valor !== undefined && valor !== null && valor !== '') {
+        params[clave] = valor;
+      }
+    }
+    return this.http.get<Producto[]>(`${API_URL}/productos`, { params });
   }
 
   detalleProducto(id: number): Observable<DetalleProducto> {
