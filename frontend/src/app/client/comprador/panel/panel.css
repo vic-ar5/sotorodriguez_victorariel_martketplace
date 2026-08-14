@@ -17,6 +17,20 @@
   text-decoration: none;
 }
 
+/* Logotipo en blanco sobre la barra azul */
+.logotipo-nav ::ng-deep svg .solid {
+  fill: var(--blanco);
+  stroke: none;
+}
+
+.logotipo-nav ::ng-deep svg .outline {
+  fill: none;
+  stroke: var(--blanco);
+  stroke-width: 3;
+  stroke-linecap: square;
+  stroke-linejoin: round;
+}
+
 /* ---------------------- Buscador ---------------------- */
 .buscador {
   margin: 0 auto;
