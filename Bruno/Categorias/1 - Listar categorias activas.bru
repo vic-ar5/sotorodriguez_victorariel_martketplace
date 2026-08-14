@@ -1,0 +1,15 @@
+meta {
+  name: Listar categorias activas
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/categorias
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+}

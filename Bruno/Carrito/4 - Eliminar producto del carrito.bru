@@ -1,0 +1,20 @@
+meta {
+  name: Eliminar producto del carrito
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/api/carrito/items/{{idProducto}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenComprador}}
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+  idProducto: 10
+}

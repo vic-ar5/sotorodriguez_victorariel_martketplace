@@ -1,0 +1,26 @@
+meta {
+  name: Cambiar estado de pedido
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/admin/pedidos/{{idPedido}}/estado
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "id_estado_pedido": 2
+  }
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+  idPedido: 2
+}

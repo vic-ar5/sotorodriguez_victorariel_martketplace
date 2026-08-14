@@ -1,0 +1,15 @@
+meta {
+  name: Listar por nombre
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/productos?nombre=laptop
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+}

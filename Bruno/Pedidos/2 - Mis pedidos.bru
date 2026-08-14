@@ -1,0 +1,19 @@
+meta {
+  name: Mis pedidos
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/pedidos/mios
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenComprador}}
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+}

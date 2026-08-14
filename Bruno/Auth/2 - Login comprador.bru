@@ -1,0 +1,29 @@
+meta {
+  name: Login comprador
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "correo": "maria@correo.mx",
+    "contrasena": "password"
+  }
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.getBody();
+    bru.setVar('tokenComprador', data.token);
+  }
+}

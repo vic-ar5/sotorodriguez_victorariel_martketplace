@@ -1,0 +1,29 @@
+meta {
+  name: Login administrador
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "correo": "admin@marketplace.mx",
+    "contrasena": "password"
+  }
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+}
+
+script:post-response {
+  if (res.status === 200) {
+    const data = res.getBody();
+    bru.setVar('tokenAdmin', data.token);
+  }
+}

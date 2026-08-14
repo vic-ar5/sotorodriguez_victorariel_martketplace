@@ -1,0 +1,19 @@
+meta {
+  name: Consultar todos los usuarios
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/admin/usuarios
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+}

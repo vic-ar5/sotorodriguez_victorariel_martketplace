@@ -1,0 +1,27 @@
+meta {
+  name: Registro comprador
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/registro
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "nombre_usuario": "cliente_nuevo",
+    "correo": "clientenuevo@correo.mx",
+    "contrasena": "clave12345",
+    "nombre": "Luis",
+    "apellido_paterno": "García",
+    "apellido_materno": "Martínez",
+    "telefono": "5511223344"
+  }
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+}

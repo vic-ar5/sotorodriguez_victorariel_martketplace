@@ -1,0 +1,16 @@
+meta {
+  name: Detalle de producto
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/productos/{{idProducto}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+  idProducto: 6
+}

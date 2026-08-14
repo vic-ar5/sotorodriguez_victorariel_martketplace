@@ -1,0 +1,38 @@
+meta {
+  name: Crear producto
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/admin/productos
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "identificador": "SKU-COMP-003",
+    "id_vendedor": {{idVendedor}},
+    "id_categoria": {{idCategoria}},
+    "nombre": "Teclado mecanico RGB",
+    "descripcion": "Teclado mecanico con switches rojos y retroiluminacion RGB.",
+    "precio": 1599.00,
+    "existencia": 20,
+    "imagen": {
+      "nombre_archivo": "teclado-mecanico.jpg",
+      "ruta_drive": "computacion/teclado-mecanico.jpg",
+      "url_publica": "https://drive.google.com/uc?export=view&id=teclado-mecanico-id"
+    }
+  }
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+  idVendedor: 5
+  idCategoria: 18
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Cambiar estado de categoria
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{baseUrl}}/api/admin/categorias/{{idCategoria}}/estado
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{tokenAdmin}}
+}
+
+body:json {
+  {
+    "activo": false
+  }
+}
+
+vars:pre-request {
+  baseUrl: http://127.0.0.1:8080
+  idCategoria: 12
+}
