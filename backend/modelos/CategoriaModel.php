@@ -74,7 +74,7 @@ class CategoriaModel
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
-            'activo'       => $activo,
+            'activo'       => (int) $activo,
             'id_categoria' => $idCategoria,
         ]);
 

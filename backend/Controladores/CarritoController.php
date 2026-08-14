@@ -72,7 +72,12 @@ class CarritoController
         }
 
         if (!$this->modelo->ModificarCantidadDelProducto((int) $usuario['sub'], $idProducto, $cantidad)) {
-            Flight::json(['error' => 'El producto no está en tu carrito'], 404);
+            Flight::json([
+                'error'                => 'El producto no está en tu carrito',
+                'debug_id_producto'    => $idProducto,
+                'debug_id_usuario_sub' => (int) $usuario['sub'],
+                'debug_carrito_activo' => $this->modelo->ConsultarCarritoActivo((int) $usuario['sub']),
+            ], 404);
             return;
         }
 

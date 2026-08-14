@@ -39,7 +39,7 @@ class UsuarioModel
 
         if ($activo !== null) {
             $sql .= " WHERE u.activo = :activo";
-            $params['activo'] = $activo;
+            $params['activo'] = (int) $activo;
         }
 
         $sql .= " ORDER BY u.fecha_registro DESC";

@@ -52,6 +52,7 @@ Flight::register('db', PDO::class, [
 ]);
 
 Flight::set('flight.v2.output_buffering', true);
+Flight::set('flight.debug', true);
 
 Flight::before('start', function () {
     Flight::response()

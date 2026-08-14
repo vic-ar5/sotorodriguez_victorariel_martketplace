@@ -13,7 +13,7 @@ class Http
 {
     public static function param(string $nombre, $porDefecto = null)
     {
-        $params = Flight::get('router')->executedRoute->params ?? [];
+        $params = Flight::router()->executedRoute->params ?? [];
 
         return $params[$nombre] ?? $porDefecto;
     }
