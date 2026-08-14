@@ -1,0 +1,133 @@
+<section class="pantalla-auth">
+  <div class="tarjeta-auth">
+    <div class="logotipo">
+      <app-logotipo />
+    </div>
+
+    <h2 class="titulo-auth">Crear cuenta</h2>
+
+    <form [formGroup]="formulario" (ngSubmit)="enviar()" novalidate>
+      <div class="campo" [class.invalido]="formulario.controls.nombre_usuario.touched && formulario.controls.nombre_usuario.invalid">
+        <label for="nombre_usuario">Nombre de usuario</label>
+        <input
+          id="nombre_usuario"
+          type="text"
+          formControlName="nombre_usuario"
+          autocomplete="username"
+          placeholder="Nombre de usuario"
+          maxlength="50"
+        />
+        @if (mensajeError('nombre_usuario')) {
+          <span class="error">{{ mensajeError('nombre_usuario') }}</span>
+        }
+      </div>
+
+      <div class="campo" [class.invalido]="formulario.controls.correo.touched && formulario.controls.correo.invalid">
+        <label for="correo">Correo electrónico</label>
+        <input
+          id="correo"
+          type="email"
+          formControlName="correo"
+          autocomplete="email"
+          placeholder="tucorreo@ejemplo.com"
+          maxlength="150"
+        />
+        @if (mensajeError('correo')) {
+          <span class="error">{{ mensajeError('correo') }}</span>
+        }
+      </div>
+
+      <div class="campo" [class.invalido]="formulario.controls.contrasena.touched && formulario.controls.contrasena.invalid">
+        <label for="contrasena">Contraseña</label>
+        <input
+          id="contrasena"
+          type="password"
+          formControlName="contrasena"
+          autocomplete="new-password"
+          placeholder="Mínimo 8 caracteres"
+          maxlength="255"
+        />
+        @if (mensajeError('contrasena')) {
+          <span class="error">{{ mensajeError('contrasena') }}</span>
+        }
+      </div>
+
+      <div class="fila-campos">
+        <div class="campo" [class.invalido]="formulario.controls.nombre.touched && formulario.controls.nombre.invalid">
+          <label for="nombre">Nombre</label>
+          <input
+            id="nombre"
+            type="text"
+            formControlName="nombre"
+            autocomplete="given-name"
+            placeholder="Nombre"
+            maxlength="80"
+          />
+          @if (mensajeError('nombre')) {
+            <span class="error">{{ mensajeError('nombre') }}</span>
+          }
+        </div>
+
+        <div class="campo" [class.invalido]="formulario.controls.apellido_paterno.touched && formulario.controls.apellido_paterno.invalid">
+          <label for="apellido_paterno">Apellido paterno</label>
+          <input
+            id="apellido_paterno"
+            type="text"
+            formControlName="apellido_paterno"
+            autocomplete="family-name"
+            placeholder="Apellido paterno"
+            maxlength="80"
+          />
+          @if (mensajeError('apellido_paterno')) {
+            <span class="error">{{ mensajeError('apellido_paterno') }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="fila-campos">
+        <div class="campo" [class.invalido]="formulario.controls.apellido_materno.touched && formulario.controls.apellido_materno.invalid">
+          <label for="apellido_materno">Apellido materno</label>
+          <input
+            id="apellido_materno"
+            type="text"
+            formControlName="apellido_materno"
+            placeholder="Apellido materno (opcional)"
+            maxlength="80"
+          />
+          @if (mensajeError('apellido_materno')) {
+            <span class="error">{{ mensajeError('apellido_materno') }}</span>
+          }
+        </div>
+
+        <div class="campo" [class.invalido]="formulario.controls.telefono.touched && formulario.controls.telefono.invalid">
+          <label for="telefono">Teléfono</label>
+          <input
+            id="telefono"
+            type="tel"
+            formControlName="telefono"
+            autocomplete="tel"
+            inputmode="numeric"
+            placeholder="10 dígitos (opcional)"
+            maxlength="10"
+          />
+          @if (mensajeError('telefono')) {
+            <span class="error">{{ mensajeError('telefono') }}</span>
+          }
+        </div>
+      </div>
+
+      @if (error) {
+        <p class="error" role="alert">{{ error }}</p>
+      }
+
+      <button type="submit" class="btn btn-aceptar btn-auth" [disabled]="cargando">
+        {{ cargando ? 'Creando cuenta…' : 'Registrarse' }}
+      </button>
+    </form>
+
+    <p class="barra-auth">
+      ¿Ya tienes cuenta?
+      <a class="enlace-claro" routerLink="/login">Inicia sesión</a>
+    </p>
+  </div>
+</section>

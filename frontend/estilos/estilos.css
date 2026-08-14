@@ -1,0 +1,326 @@
+/* =============================================================
+   Marketplace — Hoja de estilos principal
+   Paleta: azul y blanco
+   ============================================================= */
+
+/* ---------------------- Variables ---------------------- */
+:root {
+  --azul-principal: #1e4d82;
+  --azul-hover:     #2a63a3;
+  --azul-claro:     #e8f0f9;
+  --blanco:         #ffffff;
+  --gris-fondo:     #f4f6f9;
+  --gris-borde:     #e0e5ec;
+  --texto:          #23303f;
+  --texto-suave:    #5b6b7c;
+}
+
+/* ---------------------- Base y tipografía ---------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--texto);
+  background-color: var(--blanco);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5 {
+  color: var(--azul-principal);
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+}
+
+p {
+  margin: 0 0 1rem;
+}
+
+a {
+  color: var(--azul-principal);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------- Barra de navegación ---------------------- */
+.barra-navegacion {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.75rem 2rem;
+  background-color: var(--azul-principal);
+  color: var(--blanco);
+}
+
+.barra-navegacion a {
+  color: var(--blanco);
+  font-weight: 500;
+}
+
+.barra-navegacion a:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------- Buscador ---------------------- */
+.buscador {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  max-width: 480px;
+  background-color: var(--blanco);
+  border: 1px solid var(--gris-borde);
+  border-radius: 999px;
+  padding: 0.35rem 0.9rem;
+}
+
+.buscador input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 0.95rem;
+  color: var(--texto);
+}
+
+.buscador:focus-within {
+  border-color: var(--azul-hover);
+  box-shadow: 0 0 0 3px var(--azul-claro);
+}
+
+.buscador button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--azul-principal);
+  font-weight: 600;
+}
+
+/* ---------------------- Botones ---------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+/* Aceptar: azul */
+.btn-aceptar {
+  background-color: var(--azul-principal);
+  color: var(--blanco);
+}
+
+.btn-aceptar:hover {
+  background-color: var(--azul-hover);
+}
+
+/* Eliminar: blanco */
+.btn-eliminar {
+  background-color: var(--blanco);
+  color: var(--azul-principal);
+  border-color: var(--azul-principal);
+}
+
+.btn-eliminar:hover {
+  background-color: var(--azul-claro);
+}
+
+/* ---------------------- Logotipo ---------------------- */
+.logotipo {
+  display: inline-block;
+  background-color: var(--blanco);
+  padding: 20px 40px;
+  border-radius: 8px;
+}
+
+.logotipo svg {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+  display: block;
+}
+
+/* Partes sólidas (rellenas) */
+.logotipo .solid {
+  fill: var(--azul-principal);
+  stroke: none;
+}
+
+/* Partes delineadas (contornos) */
+.logotipo .outline {
+  fill: none;
+  stroke: var(--azul-principal);
+  stroke-width: 3;
+  stroke-linecap: square;
+  stroke-linejoin: round;
+}
+
+/* ---------------------- Título de pedido ---------------------- */
+.titulo-pedido {
+  /* Tipografía condensada y gruesa */
+  font-family: 'Anton', 'Impact', 'Arial Narrow', sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+
+  /* Color y dimensiones */
+  color: var(--blanco);
+  font-size: 4rem; /* Ajusta la escala según tu necesidad */
+  line-height: 0.85; /* Reduce el espacio vertical entre líneas */
+  letter-spacing: -1px; /* Comprime ligeramente el espacio entre letras */
+
+  /* Sombra sutil de fondo (para emular el relieve) */
+  text-shadow: 0px 4px 12px rgba(0, 0, 0, 0.4);
+
+  /* Contenedor con el azul exacto de la paleta */
+  background-color: var(--azul-principal);
+  padding: 20px 30px;
+  display: inline-block;
+  text-align: left;
+}
+
+/* ---------------------- Botones: estado deshabilitado ---------------------- */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---------------------- Pantallas de autenticación ---------------------- */
+.pantalla-auth {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background-color: var(--gris-fondo);
+}
+
+.tarjeta-auth {
+  width: 100%;
+  max-width: 420px;
+  padding: 2.5rem 2.25rem;
+  background-color: var(--blanco);
+  border: 1px solid var(--gris-borde);
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(30, 77, 130, 0.12);
+}
+
+.tarjeta-auth .logotipo {
+  display: block;
+  text-align: center;
+  background-color: transparent;
+  padding: 0 0 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.titulo-auth {
+  text-align: center;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+/* ---------------------- Campos de formulario ---------------------- */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1.1rem;
+  text-align: left;
+}
+
+.campo label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.campo input {
+  padding: 0.6rem 0.9rem;
+  font-size: 0.95rem;
+  color: var(--texto);
+  background-color: var(--blanco);
+  border: 1px solid var(--gris-borde);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.campo input::placeholder {
+  color: #9aa7b4;
+}
+
+.campo input:focus {
+  border-color: var(--azul-hover);
+  box-shadow: 0 0 0 3px var(--azul-claro);
+}
+
+.campo.invalido input {
+  border-color: #d64545;
+}
+
+.error {
+  font-size: 0.8rem;
+  color: #c0392b;
+}
+
+.mensaje-ok {
+  font-size: 0.9rem;
+  color: var(--azul-principal);
+  font-weight: 600;
+}
+
+.btn-auth {
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+/* ---------------------- Enlace de registro / pie de tarjeta ---------------------- */
+.barra-auth {
+  margin-top: 1.25rem;
+  text-align: center;
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+}
+
+.enlace-claro {
+  color: var(--azul-hover);
+  font-weight: 600;
+}
+
+.enlace-claro:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------- Formulario de registro ---------------------- */
+.fila-campos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 1rem;
+}
+
+@media (max-width: 480px) {
+  .fila-campos {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}
