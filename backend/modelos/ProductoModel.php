@@ -35,7 +35,11 @@ class ProductoModel
                        p.moneda,
                        v.id_usuario      AS id_vendedor,
                        c.nombre          AS categoria,
-                       i.url_publica     AS imagen
+                       CASE 
+                           WHEN i.id_imagen IS NOT NULL 
+                           THEN '/api/imagenes/' || i.id_imagen
+                           ELSE NULL
+                       END AS imagen
                 FROM productos p
                 JOIN usuario v    ON p.id_vendedor = v.id_usuario
                 JOIN categorias c ON p.id_categoria = c.id_categoria
@@ -192,7 +196,106 @@ class ProductoModel
             return null;
         }
 
-        $sql = "SELECT id_imagen, nombre_archivo, ruta_drive, url_publica, es_principal
+        $sql = "SELECT id_imagen, nombre_archivo, ruta_drive, 
+                       '/api/imagenes/' || id_imagen AS url_publica, es_principal
+                FROM imagenes
+                WHERE id_producto = :id_producto
+                ORDER BY es_principal DESC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_producto' => $idProducto]);
+
+        $producto['imagenes'] = $stmt->fetchAll();
+
+        return $producto;
+    }
+
+    /**
+     * Resumen de los productos de un vendedor para el panel administrativo:
+     * total, disponibles, no disponibles y detalle por categoría.
+     */
+    public function ConsultarResumenDelVendedor(int $idVendedor): array
+    {
+        $sql = "SELECT COUNT(*) AS total,
+                       COUNT(*) FILTER (WHERE p.estado = 'activo' AND p.existencia > 0) AS disponibles,
+                       COUNT(*) FILTER (WHERE p.estado <> 'activo' OR p.existencia = 0) AS no_disponibles
+                FROM productos p
+                WHERE p.id_vendedor = :id_vendedor";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_vendedor' => $idVendedor]);
+
+        $resumen = $stmt->fetch();
+
+        $sql = "SELECT c.nombre AS categoria,
+                       COUNT(p.id_producto) AS total,
+                       COUNT(p.id_producto) FILTER (
+                           WHERE p.estado = 'activo' AND p.existencia > 0
+                       ) AS disponibles
+                FROM productos p
+                JOIN categorias c ON p.id_categoria = c.id_categoria
+                WHERE p.id_vendedor = :id_vendedor
+                GROUP BY c.nombre
+                ORDER BY c.nombre";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_vendedor' => $idVendedor]);
+
+        $resumen['por_categoria'] = $stmt->fetchAll();
+
+        return $resumen;
+    }
+
+    /**
+     * Productos de un vendedor (uso del panel administrativo), con su imagen
+     * principal. Incluye los inactivos.
+     */
+    public function ConsultarProductosDelVendedor(int $idVendedor): array
+    {
+        $sql = "SELECT p.id_producto, p.identificador, p.nombre, p.precio, p.existencia,
+                       p.moneda, p.estado, p.fecha_registro,
+                       c.nombre AS categoria,
+                       CASE 
+                           WHEN i.id_imagen IS NOT NULL 
+                           THEN '/api/imagenes/' || i.id_imagen
+                           ELSE NULL
+                       END AS imagen
+                FROM productos p
+                JOIN categorias c ON p.id_categoria = c.id_categoria
+                LEFT JOIN imagenes i ON i.id_producto = p.id_producto AND i.es_principal = TRUE
+                WHERE p.id_vendedor = :id_vendedor
+                ORDER BY p.nombre ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_vendedor' => $idVendedor]);
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Detalle de un producto de un vendedor (incluye inactivos), con sus
+     * imágenes. No incluye datos del vendedor porque es su propio panel.
+     */
+    public function DetallesProductoDelVendedor(int $idVendedor, int $idProducto): ?array
+    {
+        $sql = "SELECT p.id_producto, p.identificador, p.nombre, p.descripcion, p.precio,
+                       p.existencia, p.moneda, p.estado, p.fecha_registro, p.fecha_actualizacion,
+                       c.nombre AS categoria
+                FROM productos p
+                JOIN categorias c ON p.id_categoria = c.id_categoria
+                WHERE p.id_producto = :id_producto AND p.id_vendedor = :id_vendedor";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_producto' => $idProducto, 'id_vendedor' => $idVendedor]);
+
+        $producto = $stmt->fetch();
+
+        if ($producto === false) {
+            return null;
+        }
+
+        $sql = "SELECT id_imagen, nombre_archivo, ruta_drive, 
+                       '/api/imagenes/' || id_imagen AS url_publica, es_principal
                 FROM imagenes
                 WHERE id_producto = :id_producto
                 ORDER BY es_principal DESC";
@@ -254,7 +357,11 @@ class ProductoModel
             $idProducto = (int) $stmt->fetchColumn();
 
             if (!empty($datos['imagen']) && is_array($datos['imagen'])) {
-                $this->RegistrarImagen($idProducto, $datos['imagen']);
+                $imagenes = $this->normalizarImagenes($datos['imagen']);
+
+                foreach ($imagenes as $imagen) {
+                    $this->RegistrarImagen($idProducto, $imagen);
+                }
             }
 
             $this->db->commit();
@@ -264,6 +371,18 @@ class ProductoModel
             $this->db->rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Acepta una imagen suelta o una lista de imágenes.
+     */
+    private function normalizarImagenes(array $imagen): array
+    {
+        if (isset($imagen['nombre_archivo'])) {
+            return [$imagen];
+        }
+
+        return array_values(array_filter($imagen, static fn ($item): bool => is_array($item)));
     }
 
     public function RegistrarImagen(int $idProducto, array $imagen): void

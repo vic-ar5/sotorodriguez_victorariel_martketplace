@@ -230,6 +230,18 @@ CREATE TABLE detalle_pedido (
     subtotal          NUMERIC(12,2) GENERATED ALWAYS AS (cantidad * precio_unitario) STORED
 );
 
+-- Notificaciones al comprador (p. ej. cuando su pedido pasa a 'Enviado')
+CREATE TABLE notificaciones (
+    id_notificacion SERIAL PRIMARY KEY,
+    id_usuario      INT          NOT NULL
+        REFERENCES usuario (id_usuario) ON DELETE CASCADE,
+    id_pedido       INT
+        REFERENCES pedidos (id_pedido) ON DELETE CASCADE,
+    mensaje         VARCHAR(255) NOT NULL,
+    leida           BOOLEAN      NOT NULL DEFAULT FALSE,
+    fecha_creacion  TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 -- =====================================================================
 -- 6. ÍNDICES (búsquedas y llaves foráneas)
 -- =====================================================================
@@ -247,6 +259,7 @@ CREATE INDEX idx_detalle_carrito_prod ON detalle_carrito (id_producto);
 CREATE INDEX idx_pedidos_usuario     ON pedidos (id_usuario);
 CREATE INDEX idx_pedidos_estado      ON pedidos (id_estado_pedido);
 CREATE INDEX idx_detalle_pedido      ON detalle_pedido (id_pedido);
+CREATE INDEX idx_notificaciones_usuario ON notificaciones (id_usuario);
 
 -- =====================================================================
 -- 7. TRIGGER: actualiza fecha_actualizacion del producto

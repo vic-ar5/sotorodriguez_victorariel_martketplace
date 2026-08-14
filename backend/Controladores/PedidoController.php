@@ -74,6 +74,32 @@ class PedidoController
         Flight::json(['mensaje' => 'Pago confirmado']);
     }
 
+    public function cancelar(): void
+    {
+        $usuario = AuthGuard::requireRol('comprador');
+
+        $idPedido = (int) Http::param('id');
+
+        if ($idPedido < 1) {
+            Flight::json(['error' => 'Id de pedido inválido'], 422);
+            return;
+        }
+
+        $resultado = $this->modelo->CancelarPedido((int) $usuario['sub'], $idPedido);
+
+        if (!$resultado['ok']) {
+            if ($resultado['error'] === 'no_encontrado') {
+                Flight::json(['error' => 'Pedido no encontrado'], 404);
+                return;
+            }
+
+            Flight::json(['error' => 'El pedido ya no se puede cancelar'], 422);
+            return;
+        }
+
+        Flight::json(['mensaje' => 'Pedido cancelado']);
+    }
+
     public function detallePropio(): void
     {
         $usuario = AuthGuard::requireRol('comprador');
@@ -93,14 +119,32 @@ class PedidoController
     {
         AuthGuard::requireRol('administrador');
 
-        $estado = Http::query('estado');
+        $estado = Http::query('estado', '');
+        $usuario = Http::query('usuario', '');
+        $folio = Http::query('folio', '');
 
-        $idEstado = null;
-        if ($estado !== null && $estado !== '') {
-            $idEstado = (int) $estado;
+        Flight::json($this->modelo->ConsultarTodosLosPedidos($estado, $usuario, $folio));
+    }
+
+    public function detalleAdmin(): void
+    {
+        AuthGuard::requireRol('administrador');
+
+        $idPedido = (int) Http::param('id');
+
+        if ($idPedido < 1) {
+            Flight::json(['error' => 'Id de pedido inválido'], 422);
+            return;
         }
 
-        Flight::json($this->modelo->ConsultarTodosLosPedidos($idEstado));
+        $pedido = $this->modelo->ConsultarDetalleDePedidoAdmin($idPedido);
+
+        if ($pedido === null) {
+            Flight::json(['error' => 'Pedido no encontrado'], 404);
+            return;
+        }
+
+        Flight::json($pedido);
     }
 
     public function cambiarEstado(): void
@@ -108,18 +152,64 @@ class PedidoController
         AuthGuard::requireRol('administrador');
 
         $idPedido = (int) Http::param('id');
-        $idEstado = (int) Http::body('id_estado_pedido', 0);
+        $estado = trim((string) Http::body('estado', ''));
 
-        if ($idEstado < 1 || $idEstado > 6) {
-            Flight::json(['error' => 'id_estado_pedido inválido (1 a 6)'], 422);
+        if ($idPedido < 1) {
+            Flight::json(['error' => 'Id de pedido inválido'], 422);
             return;
         }
 
-        if (!$this->modelo->ActualizarEstadoDelPedido($idPedido, $idEstado)) {
-            Flight::json(['error' => 'Pedido no encontrado'], 404);
+        if ($estado === '') {
+            Flight::json(['error' => 'El campo estado es obligatorio'], 422);
+            return;
+        }
+
+        $resultado = $this->modelo->ActualizarEstadoDelPedido($idPedido, $estado);
+
+        if (!$resultado['ok']) {
+            if ($resultado['error'] === 'no_encontrado') {
+                Flight::json(['error' => 'Pedido no encontrado'], 404);
+                return;
+            }
+
+            if ($resultado['error'] === 'transicion_invalida') {
+                Flight::json([
+                    'error' => 'No se puede pasar el pedido a ' . $estado
+                        . ' desde el estado ' . ($resultado['estado'] ?? 'actual'),
+                ], 422);
+                return;
+            }
+
+            Flight::json(['error' => 'Estado inválido'], 422);
             return;
         }
 
         Flight::json(['mensaje' => 'Estado del pedido actualizado']);
+    }
+
+    public function confirmarEntrega(): void
+    {
+        $usuario = AuthGuard::requireRol('comprador');
+
+        $idPedido = (int) Http::param('id');
+
+        if ($idPedido < 1) {
+            Flight::json(['error' => 'Id de pedido inválido'], 422);
+            return;
+        }
+
+        $resultado = $this->modelo->ConfirmarEntrega((int) $usuario['sub'], $idPedido);
+
+        if (!$resultado['ok']) {
+            if ($resultado['error'] === 'no_encontrado') {
+                Flight::json(['error' => 'Pedido no encontrado'], 404);
+                return;
+            }
+
+            Flight::json(['error' => 'El pedido aún no está enviado o ya fue entregado'], 422);
+            return;
+        }
+
+        Flight::json(['mensaje' => 'Entrega confirmada']);
     }
 }

@@ -110,6 +110,15 @@ export interface EstadoMx {
   nombre: string;
 }
 
+export interface PedidoResumen {
+  id_pedido: number;
+  numero_pedido: string;
+  fecha_pedido: string;
+  total: string | number;
+  moneda: string;
+  estado: string;
+}
+
 export interface ItemRecibo {
   id_producto: number;
   identificador: string;
@@ -140,6 +149,21 @@ export interface Recibo {
     pais: string;
   };
   detalle: ItemRecibo[];
+}
+
+export interface Notificacion {
+  id_notificacion: number;
+  id_pedido: number | null;
+  numero_pedido: string | null;
+  estado_pedido: string | null;
+  mensaje: string;
+  leida: boolean | string | number;
+  fecha_creacion: string;
+}
+
+export interface NotificacionesRespuesta {
+  no_leidas: number;
+  notificaciones: Notificacion[];
 }
 
 @Injectable({ providedIn: 'root' })
@@ -306,6 +330,42 @@ export class CompradorService {
   confirmarPago(token: string, idPedido: number): Observable<{ mensaje: string }> {
     return this.http.post<{ mensaje: string }>(
       `${API_URL}/pedidos/${idPedido}/confirmar`,
+      {},
+      { headers: this.headers(token) },
+    );
+  }
+
+  cancelarPedido(token: string, idPedido: number): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(
+      `${API_URL}/pedidos/${idPedido}/cancelar`,
+      {},
+      { headers: this.headers(token) },
+    );
+  }
+
+  misPedidos(token: string): Observable<PedidoResumen[]> {
+    return this.http.get<PedidoResumen[]>(`${API_URL}/pedidos/mios`, {
+      headers: this.headers(token),
+    });
+  }
+
+  notificaciones(token: string): Observable<NotificacionesRespuesta> {
+    return this.http.get<NotificacionesRespuesta>(`${API_URL}/notificaciones`, {
+      headers: this.headers(token),
+    });
+  }
+
+  marcarNotificacionesLeidas(token: string): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(
+      `${API_URL}/notificaciones/leer`,
+      {},
+      { headers: this.headers(token) },
+    );
+  }
+
+  confirmarEntrega(token: string, idPedido: number): Observable<{ mensaje: string }> {
+    return this.http.post<{ mensaje: string }>(
+      `${API_URL}/pedidos/${idPedido}/confirmar-entrega`,
       {},
       { headers: this.headers(token) },
     );

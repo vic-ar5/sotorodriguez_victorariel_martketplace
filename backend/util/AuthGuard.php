@@ -13,13 +13,39 @@ class AuthGuard
 {
     public static function tokenActual(): ?string
     {
-        $auth = Flight::request()->getHeader('Authorization');
+        $auth = self::cabeceraAutorizacion();
 
         if ($auth !== '' && preg_match('/Bearer\s+(.+)/i', $auth, $coincidencias) === 1) {
             return trim($coincidencias[1]);
         }
 
         return null;
+    }
+
+    /**
+     * Lee el encabezado Authorization desde las fuentes que usa cada
+     * servidor web. Apache con mod_rewrite (rewrites vía .htaccess) o
+     * PHP-CGI/FastCGI no siempre deja HTTP_AUTHORIZATION en $_SERVER.
+     */
+    private static function cabeceraAutorizacion(): string
+    {
+        $servidor = $_SERVER['HTTP_AUTHORIZATION']
+            ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION']
+            ?? '';
+
+        if ($servidor !== '') {
+            return (string) $servidor;
+        }
+
+        if (function_exists('apache_request_headers')) {
+            foreach (apache_request_headers() as $clave => $valor) {
+                if (strcasecmp((string) $clave, 'Authorization') === 0) {
+                    return (string) $valor;
+                }
+            }
+        }
+
+        return '';
     }
 
     /**

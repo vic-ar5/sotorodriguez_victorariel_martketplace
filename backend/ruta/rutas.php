@@ -5,7 +5,9 @@ declare(strict_types=1);
 use App\Controladores\AuthController;
 use App\Controladores\CarritoController;
 use App\Controladores\CategoriaController;
+use App\Controladores\DashboardController;
 use App\Controladores\DireccionController;
+use App\Controladores\NotificacionController;
 use App\Controladores\PedidoController;
 use App\Controladores\ProductoController;
 use App\Controladores\UsuarioController;
@@ -18,6 +20,7 @@ use App\Controladores\UsuarioController;
 
 Flight::route('GET /api/productos', [ProductoController::class, 'index']);
 Flight::route('GET /api/productos/@id:[0-9]+', [ProductoController::class, 'show']);
+Flight::route('GET /api/imagenes/@id:[0-9]+', [ProductoController::class, 'descargarImagen']);
 Flight::route('GET /api/categorias', [CategoriaController::class, 'index']);
 Flight::route('GET /api/estados-mexico', [DireccionController::class, 'estados']);
 
@@ -42,8 +45,13 @@ Flight::group('/api', function (): void {
 
     Flight::route('POST /pedidos', [PedidoController::class, 'crear']);
     Flight::route('POST /pedidos/@id:[0-9]+/confirmar', [PedidoController::class, 'confirmarPago']);
+    Flight::route('POST /pedidos/@id:[0-9]+/confirmar-entrega', [PedidoController::class, 'confirmarEntrega']);
+    Flight::route('POST /pedidos/@id:[0-9]+/cancelar', [PedidoController::class, 'cancelar']);
     Flight::route('GET /pedidos/mios', [PedidoController::class, 'mios']);
     Flight::route('GET /pedidos/@id:[0-9]+', [PedidoController::class, 'detallePropio']);
+
+    Flight::route('GET /notificaciones', [NotificacionController::class, 'index']);
+    Flight::route('POST /notificaciones/leer', [NotificacionController::class, 'leer']);
 
     Flight::route('GET /direcciones', [DireccionController::class, 'index']);
     Flight::route('POST /direcciones', [DireccionController::class, 'crear']);
@@ -61,7 +69,11 @@ Flight::group('/api', function (): void {
 */
 
 Flight::group('/api/admin', function (): void {
+    Flight::route('GET /dashboard', [DashboardController::class, 'index']);
+
     Flight::route('GET /productos', [ProductoController::class, 'adminIndex']);
+    Flight::route('GET /productos/mios', [ProductoController::class, 'adminMisProductos']);
+    Flight::route('GET /productos/@id:[0-9]+', [ProductoController::class, 'adminShow']);
     Flight::route('POST /productos', [ProductoController::class, 'crear']);
     Flight::route('PUT /productos/@id:[0-9]+', [ProductoController::class, 'actualizar']);
     Flight::route('PATCH /productos/@id:[0-9]+/estado', [ProductoController::class, 'cambiarEstado']);
@@ -74,5 +86,6 @@ Flight::group('/api/admin', function (): void {
     Flight::route('GET /usuarios', [UsuarioController::class, 'index']);
 
     Flight::route('GET /pedidos', [PedidoController::class, 'todos']);
+    Flight::route('GET /pedidos/@id:[0-9]+', [PedidoController::class, 'detalleAdmin']);
     Flight::route('PATCH /pedidos/@id:[0-9]+/estado', [PedidoController::class, 'cambiarEstado']);
 });

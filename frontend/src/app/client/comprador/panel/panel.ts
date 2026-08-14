@@ -14,9 +14,12 @@ import {
   DireccionDatos,
   EstadoMx,
   MiPerfil,
+  Notificacion,
+  PedidoResumen,
   Producto,
   Recibo,
 } from './comprador.service';
+import { generarPdfRecibo } from './recibo-pdf';
 
 @Component({
   selector: 'app-comprador-panel',
@@ -64,6 +67,18 @@ export class CompradorPanel implements OnInit {
   protected mensajeCart = '';
   protected mensajeRecibo = '';
 
+  protected pedidosAbierto = false;
+  protected pedidos: PedidoResumen[] = [];
+  protected cargandoPedidos = false;
+  protected mensajePedidos = '';
+
+  protected notificacionesAbierto = false;
+  protected notificaciones: Notificacion[] = [];
+  protected cargandoNotificaciones = false;
+  protected mensajeNotificaciones = '';
+  protected noLeidasNotificaciones = 0;
+  protected confirmandoEntrega = false;
+
   protected pagoAbierto = false;
   protected direcciones: Direccion[] = [];
   protected direccionSeleccionadaId: number | null = null;
@@ -101,6 +116,7 @@ export class CompradorPanel implements OnInit {
     this.cargarPerfil();
     this.cargarCategorias();
     this.cargarCarrito();
+    this.cargarNotificaciones();
   }
 
   protected cargarProductos(): void {
@@ -170,6 +186,9 @@ export class CompradorPanel implements OnInit {
       this.editandoPerfil = false;
     }
     this.filtrosAbiertos = false;
+    this.carritoAbierto = false;
+    this.pedidosAbierto = false;
+    this.notificacionesAbierto = false;
   }
 
   protected cargarPerfil(): void {
@@ -339,6 +358,212 @@ export class CompradorPanel implements OnInit {
     this.mensajeCart = '';
     this.menuAbierto = false;
     this.filtrosAbiertos = false;
+    this.pedidosAbierto = false;
+    this.notificacionesAbierto = false;
+  }
+
+  protected alternarPedidos(): void {
+    this.pedidosAbierto = !this.pedidosAbierto;
+    this.mensajePedidos = '';
+    this.carritoAbierto = false;
+    this.menuAbierto = false;
+    this.filtrosAbiertos = false;
+    this.notificacionesAbierto = false;
+    if (this.pedidosAbierto) {
+      this.cargarPedidos();
+    }
+  }
+
+  protected cargarPedidos(): void {
+    if (!this.token) {
+      return;
+    }
+
+    const token = this.token;
+    this.cargandoPedidos = true;
+    this.mensajePedidos = '';
+    this.servicio.misPedidos(token).subscribe({
+      next: (pedidos) => {
+        this.cargandoPedidos = false;
+        this.pedidos = pedidos;
+      },
+      error: () => {
+        this.cargandoPedidos = false;
+        this.mensajePedidos = 'No se pudieron cargar tus pedidos.';
+      },
+    });
+  }
+
+  protected abrirPedido(pedido: PedidoResumen): void {
+    if (!this.token) {
+      return;
+    }
+
+    const token = this.token;
+    this.servicio.recibo(token, pedido.id_pedido).subscribe({
+      next: (recibo) => {
+        this.recibo = recibo;
+        this.mensajeRecibo = '';
+        this.pedidosAbierto = false;
+        this.reciboAbierto = true;
+      },
+      error: () => {
+        this.mensajePedidos = 'No se pudo cargar el detalle del pedido.';
+      },
+    });
+  }
+
+  protected cancelandoPedido = false;
+
+  // ---------------------- Notificaciones ----------------------
+  protected alternarNotificaciones(): void {
+    this.notificacionesAbierto = !this.notificacionesAbierto;
+    this.carritoAbierto = false;
+    this.menuAbierto = false;
+    this.filtrosAbiertos = false;
+    this.pedidosAbierto = false;
+    if (this.notificacionesAbierto) {
+      this.cargarNotificaciones();
+      this.marcarLeidasNotificaciones();
+    }
+  }
+
+  protected cargarNotificaciones(): void {
+    if (!this.token) {
+      return;
+    }
+
+    const token = this.token;
+    this.cargandoNotificaciones = true;
+    this.mensajeNotificaciones = '';
+
+    this.servicio.notificaciones(token).subscribe({
+      next: (respuesta) => {
+        this.cargandoNotificaciones = false;
+        this.notificaciones = respuesta.notificaciones.map((notificacion) => ({
+          ...notificacion,
+          leida: this.notificacionLeida(notificacion),
+        }));
+        this.noLeidasNotificaciones = Number(respuesta.no_leidas || 0);
+      },
+      error: () => {
+        this.cargandoNotificaciones = false;
+        this.mensajeNotificaciones = 'No se pudieron cargar las notificaciones.';
+      },
+    });
+  }
+
+  protected notificacionLeida(n: Notificacion): boolean {
+    return (
+      n.leida === true ||
+      n.leida === 1 ||
+      n.leida === '1' ||
+      n.leida === 't' ||
+      n.leida === 'true'
+    );
+  }
+
+  protected marcarLeidasNotificaciones(): void {
+    if (!this.token) {
+      return;
+    }
+
+    this.servicio.marcarNotificacionesLeidas(this.token).subscribe({
+      next: () => {
+        this.noLeidasNotificaciones = 0;
+      },
+      error: () => {
+        // Si falla, el punto verde permanece hasta la próxima carga.
+      },
+    });
+  }
+
+  protected abrirPedidoDesdeNotificacion(n: Notificacion): void {
+    if (!n.id_pedido || !this.token) {
+      return;
+    }
+
+    const token = this.token;
+    this.notificacionesAbierto = false;
+
+    this.servicio.recibo(token, n.id_pedido).subscribe({
+      next: (recibo) => {
+        this.recibo = recibo;
+        this.mensajeRecibo = '';
+        this.reciboAbierto = true;
+      },
+      error: () => {
+        this.mensajeNotificaciones = 'No se pudo cargar el detalle del pedido.';
+      },
+    });
+  }
+
+  protected confirmarEntrega(): void {
+    if (!this.recibo || !this.token) {
+      return;
+    }
+
+    const token = this.token;
+    const recibo = this.recibo;
+
+    this.confirmandoEntrega = true;
+    this.mensajeRecibo = '';
+
+    this.servicio.confirmarEntrega(token, recibo.id_pedido).subscribe({
+      next: () => {
+        this.confirmandoEntrega = false;
+        this.recibo = { ...recibo, estado: 'Entregado' };
+        this.cargarPedidos();
+        this.cargarNotificaciones();
+        this.mostrarNotificacion('Entrega confirmada. Gracias por tu compra.');
+      },
+      error: () => {
+        this.confirmandoEntrega = false;
+        this.mensajeRecibo = 'No se pudo confirmar la entrega del pedido.';
+      },
+    });
+  }
+
+  protected cancelarPedido(): void {
+    if (!this.recibo || !this.token) {
+      return;
+    }
+
+    const token = this.token;
+    const recibo = this.recibo;
+
+    this.cancelandoPedido = true;
+    this.mensajeRecibo = '';
+
+    this.servicio.cancelarPedido(token, recibo.id_pedido).subscribe({
+      next: () => {
+        this.cancelandoPedido = false;
+        this.recibo = { ...recibo, estado: 'Cancelado' };
+        this.cargarPedidos();
+        this.mostrarNotificacion('Pedido cancelado.');
+      },
+      error: () => {
+        this.cancelandoPedido = false;
+        this.mensajeRecibo = 'El pedido ya no se puede cancelar.';
+      },
+    });
+  }
+
+  protected descargarReciboPdf(): void {
+    if (!this.recibo) {
+      return;
+    }
+
+    const bytes = generarPdfRecibo(this.recibo);
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const enlace = document.createElement('a');
+    enlace.href = url;
+    enlace.download = `recibo-${this.recibo.numero_pedido}.pdf`;
+    document.body.appendChild(enlace);
+    enlace.click();
+    document.body.removeChild(enlace);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
   protected cambiarCantidad(item: CarritoItem, nueva: string | number): void {

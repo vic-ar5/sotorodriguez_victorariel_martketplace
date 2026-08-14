@@ -175,6 +175,69 @@ class PedidoModel
     }
 
     /**
+     * Cancela un pedido del comprador mientras esté 'Pendiente' o 'Confirmado',
+     * y devuelve el stock reservado a cada producto. Devuelve:
+     *   ['ok' => true,  'estado_anterior' => string]  si se canceló,
+     *   ['ok' => false, 'error' => 'no_encontrado']   si no existe o no es suyo,
+     *   ['ok' => false, 'error' => 'no_cancelable', 'estado'?] si ya no puede cancelarse.
+     */
+    public function CancelarPedido(int $idUsuario, int $idPedido): array
+    {
+        $sql = "SELECT p.id_pedido, ep.nombre AS estado
+                FROM pedidos p
+                JOIN estados_pedido ep ON p.id_estado_pedido = ep.id_estado_pedido
+                WHERE p.id_pedido = :id_pedido AND p.id_usuario = :id_usuario";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_pedido' => $idPedido, 'id_usuario' => $idUsuario]);
+
+        $pedido = $stmt->fetch();
+
+        if ($pedido === false) {
+            return ['ok' => false, 'error' => 'no_encontrado'];
+        }
+
+        $estado = $pedido['estado'];
+
+        if ($estado !== 'Pendiente' && $estado !== 'Confirmado') {
+            return ['ok' => false, 'error' => 'no_cancelable', 'estado' => $estado];
+        }
+
+        $this->db->beginTransaction();
+
+        try {
+            $sql = "UPDATE pedidos
+                    SET id_estado_pedido = (
+                        SELECT id_estado_pedido FROM estados_pedido WHERE nombre = 'Cancelado'
+                    )
+                    WHERE id_pedido = :id_pedido AND id_usuario = :id_usuario";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['id_pedido' => $idPedido, 'id_usuario' => $idUsuario]);
+
+            $sql = "SELECT id_producto, cantidad FROM detalle_pedido WHERE id_pedido = :id_pedido";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['id_pedido' => $idPedido]);
+
+            $items = $stmt->fetchAll();
+
+            foreach ($items as $item) {
+                (new ProductoModel())->RestaurarStock(
+                    (int) $item['id_producto'],
+                    (int) $item['cantidad'],
+                );
+            }
+
+            $this->db->commit();
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+
+        return ['ok' => true, 'estado_anterior' => $estado];
+    }
+
+    /**
      * Pedidos de un comprador (listado).
      */
     public function ConsultarPedidosDelComprador(int $idUsuario): array
@@ -285,24 +348,50 @@ class PedidoModel
     }
 
     /**
-     * Consulta administrativa de pedidos; se puede filtrar por estado.
+     * Consulta administrativa de pedidos; se puede filtrar por estado,
+     * usuario (nombre de usuario o persona) y folio (número de pedido).
      */
-    public function ConsultarTodosLosPedidos(?int $idEstado): array
-    {
+    public function ConsultarTodosLosPedidos(
+        ?string $estado,
+        ?string $usuario,
+        ?string $folio,
+    ): array {
         $sql = "SELECT p.id_pedido, p.numero_pedido, p.fecha_pedido, p.total, p.moneda,
                        ep.nombre AS estado,
                        u.nombre_usuario,
+                       TRIM(COALESCE(pe.nombre, '')
+                            || ' ' || COALESCE(pe.apellido_paterno, '')
+                            || ' ' || COALESCE(pe.apellido_materno, '')) AS comprador,
                        d.nombre || ' - ' || d.calle || ' ' || d.numero_exterior AS direccion
                 FROM pedidos p
                 JOIN usuario u        ON p.id_usuario = u.id_usuario
                 JOIN estados_pedido ep ON p.id_estado_pedido = ep.id_estado_pedido
+                LEFT JOIN persona pe ON u.id_usuario = pe.id_usuario
                 LEFT JOIN direcciones d ON p.id_direccion = d.id_direccion";
 
+        $condiciones = [];
         $params = [];
 
-        if ($idEstado !== null) {
-            $sql .= " WHERE p.id_estado_pedido = :id_estado_pedido";
-            $params['id_estado_pedido'] = $idEstado;
+        if ($estado !== null && $estado !== '') {
+            $condiciones[] = "ep.nombre = :estado";
+            $params['estado'] = $estado;
+        }
+
+        if ($usuario !== null && $usuario !== '') {
+            $condiciones[] = "(u.nombre_usuario ILIKE :usuario
+                              OR pe.nombre ILIKE :usuario
+                              OR pe.apellido_paterno ILIKE :usuario
+                              OR pe.apellido_materno ILIKE :usuario)";
+            $params['usuario'] = '%' . $usuario . '%';
+        }
+
+        if ($folio !== null && $folio !== '') {
+            $condiciones[] = "p.numero_pedido ILIKE :folio";
+            $params['folio'] = '%' . $folio . '%';
+        }
+
+        if ($condiciones !== []) {
+            $sql .= " WHERE " . implode(' AND ', $condiciones);
         }
 
         $sql .= " ORDER BY p.fecha_pedido DESC";
@@ -314,19 +403,247 @@ class PedidoModel
     }
 
     /**
-     * Cambia el estado de un pedido (1 Pendiente ... 6 Cancelado).
+     * Detalle administrativo de un pedido: comprador, dirección y productos.
+     * Sirve para revisar el pedido completo desde el panel del administrador.
      */
-    public function ActualizarEstadoDelPedido(int $idPedido, int $idEstado): bool
+    public function ConsultarDetalleDePedidoAdmin(int $idPedido): ?array
     {
-        $sql = "UPDATE pedidos SET id_estado_pedido = :id_estado_pedido
-                WHERE id_pedido = :id_pedido";
+        $sql = "SELECT p.id_pedido, p.numero_pedido, p.fecha_pedido, p.total, p.moneda,
+                       ep.nombre AS estado,
+                       u.nombre_usuario,
+                       pe.nombre AS comprador_nombre,
+                       pe.apellido_paterno AS comprador_apellido_paterno,
+                       pe.apellido_materno AS comprador_apellido_materno,
+                       d.nombre AS direccion_nombre,
+                       d.calle AS direccion_calle,
+                       d.numero_exterior AS direccion_numero_exterior,
+                       d.numero_interior AS direccion_numero_interior,
+                       d.colonia AS direccion_colonia,
+                       d.codigo_postal AS direccion_codigo_postal,
+                       d.municipio AS direccion_municipio,
+                       e.nombre AS direccion_estado,
+                       d.pais AS direccion_pais
+                FROM pedidos p
+                JOIN estados_pedido ep ON p.id_estado_pedido = ep.id_estado_pedido
+                JOIN usuario u         ON p.id_usuario = u.id_usuario
+                LEFT JOIN persona pe   ON u.id_usuario = pe.id_usuario
+                LEFT JOIN direcciones d ON p.id_direccion = d.id_direccion
+                LEFT JOIN estados_mexico e ON d.id_estado = e.id_estado
+                WHERE p.id_pedido = :id_pedido";
 
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            'id_estado_pedido' => $idEstado,
-            'id_pedido'        => $idPedido,
-        ]);
+        $stmt->execute(['id_pedido' => $idPedido]);
 
-        return $stmt->rowCount() > 0;
+        $pedido = $stmt->fetch();
+
+        if ($pedido === false) {
+            return null;
+        }
+
+        $pedido['persona'] = trim(
+            ($pedido['comprador_nombre'] ?? '')
+            . ' ' . ($pedido['comprador_apellido_paterno'] ?? '')
+            . ($pedido['comprador_apellido_materno'] !== null ? ' ' . $pedido['comprador_apellido_materno'] : ''),
+        );
+
+        $pedido['direccion'] = [
+            'nombre'          => $pedido['direccion_nombre'],
+            'calle'           => $pedido['direccion_calle'],
+            'numero_exterior' => $pedido['direccion_numero_exterior'],
+            'numero_interior' => $pedido['direccion_numero_interior'],
+            'colonia'         => $pedido['direccion_colonia'],
+            'codigo_postal'   => $pedido['direccion_codigo_postal'],
+            'municipio'       => $pedido['direccion_municipio'],
+            'estado'          => $pedido['direccion_estado'],
+            'pais'            => $pedido['direccion_pais'],
+        ];
+
+        unset(
+            $pedido['comprador_nombre'],
+            $pedido['comprador_apellido_paterno'],
+            $pedido['comprador_apellido_materno'],
+            $pedido['direccion_nombre'],
+            $pedido['direccion_calle'],
+            $pedido['direccion_numero_exterior'],
+            $pedido['direccion_numero_interior'],
+            $pedido['direccion_colonia'],
+            $pedido['direccion_codigo_postal'],
+            $pedido['direccion_municipio'],
+            $pedido['direccion_estado'],
+            $pedido['direccion_pais'],
+        );
+
+        $pedido['detalle'] = $this->ConsultarItemsDelPedido($idPedido);
+
+        return $pedido;
+    }
+
+    /**
+     * Resumen de pedidos que incluyen productos de un vendedor (panel
+     * administrativo): total y cantidades por estado.
+     */
+    public function ConsultarResumenDePedidosDelVendedor(int $idVendedor): array
+    {
+        $sql = "SELECT COUNT(DISTINCT p.id_pedido) AS total
+                FROM pedidos p
+                JOIN detalle_pedido dp ON dp.id_pedido = p.id_pedido
+                JOIN productos pr      ON pr.id_producto = dp.id_producto
+                WHERE pr.id_vendedor = :id_vendedor";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_vendedor' => $idVendedor]);
+
+        $resumen = ['total' => (int) $stmt->fetchColumn(), 'por_estado' => []];
+
+        $sql = "SELECT ep.nombre AS estado, COUNT(DISTINCT p.id_pedido) AS cantidad
+                FROM pedidos p
+                JOIN detalle_pedido dp ON dp.id_pedido = p.id_pedido
+                JOIN productos pr      ON pr.id_producto = dp.id_producto
+                JOIN estados_pedido ep ON p.id_estado_pedido = ep.id_estado_pedido
+                WHERE pr.id_vendedor = :id_vendedor
+                GROUP BY ep.id_estado_pedido, ep.nombre
+                ORDER BY ep.id_estado_pedido";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_vendedor' => $idVendedor]);
+
+        $resumen['por_estado'] = $stmt->fetchAll();
+
+        return $resumen;
+    }
+
+    /**
+     * Cambia el estado de un pedido por parte del administrador. Valida que
+     * la transición sea válida y, cuando el pedido pasa a 'Enviado', crea
+     * una notificación para el comprador. Devuelve:
+     *   ['ok' => true, 'estado' => string]             si se cambió,
+     *   ['ok' => false, 'error' => 'no_encontrado']    si el pedido no existe,
+     *   ['ok' => false, 'error' => 'estado_invalido']  si el destino no es válido,
+     *   ['ok' => false, 'error' => 'transicion_invalida', 'estado'?] si no procede.
+     */
+    public function ActualizarEstadoDelPedido(int $idPedido, string $estado): array
+    {
+        $destinos = ['Preparando', 'Enviado', 'Entregado', 'Cancelado'];
+
+        if (!in_array($estado, $destinos, true)) {
+            return ['ok' => false, 'error' => 'estado_invalido'];
+        }
+
+        $sql = "SELECT p.id_pedido, p.id_usuario, p.numero_pedido, ep.nombre AS estado
+                FROM pedidos p
+                JOIN estados_pedido ep ON p.id_estado_pedido = ep.id_estado_pedido
+                WHERE p.id_pedido = :id_pedido";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_pedido' => $idPedido]);
+
+        $pedido = $stmt->fetch();
+
+        if ($pedido === false) {
+            return ['ok' => false, 'error' => 'no_encontrado'];
+        }
+
+        $estadoActual = $pedido['estado'];
+
+        $origenesValidos = [
+            'Preparando' => ['Confirmado'],
+            'Enviado'    => ['Preparando'],
+            'Entregado'  => ['Enviado'],
+            'Cancelado'  => ['Pendiente', 'Confirmado', 'Preparando', 'Enviado'],
+        ];
+
+        if (!in_array($estadoActual, $origenesValidos[$estado], true)) {
+            return [
+                'ok'     => false,
+                'error'  => 'transicion_invalida',
+                'estado' => $estadoActual,
+            ];
+        }
+
+        $this->db->beginTransaction();
+
+        try {
+            $sql = "UPDATE pedidos
+                    SET id_estado_pedido = (
+                        SELECT id_estado_pedido FROM estados_pedido WHERE nombre = :estado
+                    )
+                    WHERE id_pedido = :id_pedido";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['estado' => $estado, 'id_pedido' => $idPedido]);
+
+            if ($estado === 'Enviado') {
+                $notificacion = 'Tu pedido ' . $pedido['numero_pedido']
+                    . ' ha sido enviado. Confirma la entrega cuando lo recibas.';
+
+                (new NotificacionModel())->Crear(
+                    (int) $pedido['id_usuario'],
+                    $idPedido,
+                    $notificacion,
+                );
+            }
+
+            $this->db->commit();
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+
+        return ['ok' => true, 'estado' => $estado];
+    }
+
+    /**
+     * El comprador confirma la entrega de su pedido: solo se permite cuando
+     * el pedido está 'Enviado' y pasa a 'Entregado'. Marca como leídas las
+     * notificaciones de ese pedido. Devuelve:
+     *   ['ok' => true]                                  si se confirmó,
+     *   ['ok' => false, 'error' => 'no_encontrado']     si no existe o no es suyo,
+     *   ['ok' => false, 'error' => 'estado_invalido', 'estado'?] si no está enviado.
+     */
+    public function ConfirmarEntrega(int $idUsuario, int $idPedido): array
+    {
+        $sql = "SELECT p.id_pedido, ep.nombre AS estado
+                FROM pedidos p
+                JOIN estados_pedido ep ON p.id_estado_pedido = ep.id_estado_pedido
+                WHERE p.id_pedido = :id_pedido AND p.id_usuario = :id_usuario";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_pedido' => $idPedido, 'id_usuario' => $idUsuario]);
+
+        $pedido = $stmt->fetch();
+
+        if ($pedido === false) {
+            return ['ok' => false, 'error' => 'no_encontrado'];
+        }
+
+        if ($pedido['estado'] !== 'Enviado') {
+            return [
+                'ok'     => false,
+                'error'  => 'estado_invalido',
+                'estado' => $pedido['estado'],
+            ];
+        }
+
+        $this->db->beginTransaction();
+
+        try {
+            $sql = "UPDATE pedidos
+                    SET id_estado_pedido = (
+                        SELECT id_estado_pedido FROM estados_pedido WHERE nombre = 'Entregado'
+                    )
+                    WHERE id_pedido = :id_pedido AND id_usuario = :id_usuario";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(['id_pedido' => $idPedido, 'id_usuario' => $idUsuario]);
+
+            (new NotificacionModel())->MarcarLeidasDePedido($idUsuario, $idPedido);
+
+            $this->db->commit();
+        } catch (Throwable $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+
+        return ['ok' => true];
     }
 }

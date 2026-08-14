@@ -36,6 +36,23 @@ class CategoriaModel
         return $stmt->fetchAll();
     }
 
+    /**
+     * Consulta una categoría por su ID (para ubicar la carpeta en Google Drive).
+     */
+    public function ConsultarCategoria(int $idCategoria): ?array
+    {
+        $sql = "SELECT id_categoria, nombre, descripcion, activo
+                FROM categorias
+                WHERE id_categoria = :id_categoria";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_categoria' => $idCategoria]);
+
+        $fila = $stmt->fetch();
+
+        return $fila === false ? null : $fila;
+    }
+
     public function RegistrarCategoria(array $datos): int
     {
         $sql = "INSERT INTO categorias (nombre, descripcion)
