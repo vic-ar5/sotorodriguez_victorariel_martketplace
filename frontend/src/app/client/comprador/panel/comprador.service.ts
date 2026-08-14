@@ -141,6 +141,24 @@ export class CompradorService {
     });
   }
 
+  eliminarItemDelCarrito(token: string, idProducto: number): Observable<unknown> {
+    return this.http.delete(`${API_URL}/carrito/items/${idProducto}`, {
+      headers: this.headers(token),
+    });
+  }
+
+  modificarCantidad(
+    token: string,
+    idProducto: number,
+    cantidad: number,
+  ): Observable<unknown> {
+    return this.http.patch(
+      `${API_URL}/carrito/items/${idProducto}`,
+      { cantidad },
+      { headers: this.headers(token) },
+    );
+  }
+
   private headers(token: string): HttpHeaders {
     return new HttpHeaders({ Authorization: `Bearer ${token}` });
   }

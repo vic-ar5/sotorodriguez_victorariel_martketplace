@@ -160,9 +160,40 @@
                 <li class="item-carrito">
                   <div class="info-item-carrito">
                     <strong>{{ item.nombre }}</strong>
-                    <span>{{ formatearPrecio(item.precio_unitario) }} × {{ item.cantidad }}</span>
+                    <span>{{ formatearPrecio(item.precio_unitario) }}</span>
+                  </div>
+                  <div class="controles-cantidad">
+                    <button
+                      type="button"
+                      class="btn-paso"
+                      [disabled]="item.cantidad <= 1"
+                      (click)="cambiarCantidad(item, item.cantidad - 1)"
+                      aria-label="Disminuir cantidad"
+                    >−</button>
+                    <input
+                      type="number"
+                      min="1"
+                      [max]="item.existencia + item.cantidad"
+                      [value]="item.cantidad"
+                      (change)="cambiarCantidad(item, $any($event.target).value)"
+                      aria-label="Cantidad de {{ item.nombre }}"
+                    />
+                    <button
+                      type="button"
+                      class="btn-paso"
+                      (click)="cambiarCantidad(item, item.cantidad + 1)"
+                      aria-label="Aumentar cantidad"
+                    >+</button>
                   </div>
                   <span class="subtotal-item-carrito">{{ formatearPrecio(item.subtotal) }}</span>
+                  <button
+                    type="button"
+                    class="btn-eliminar-item"
+                    (click)="eliminarItem(item)"
+                    aria-label="Eliminar {{ item.nombre }} del carrito"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                  </button>
                 </li>
               }
             </ul>
@@ -170,6 +201,10 @@
               <p class="linea-total"><span>Subtotal</span><span>{{ formatearPrecio(carrito.total) }}</span></p>
               <p class="linea-total total-carrito"><span>Total</span><span>{{ formatearPrecio(carrito.total) }}</span></p>
             </div>
+          }
+
+          @if (mensajeCart) {
+            <p class="mensaje-carrito">{{ mensajeCart }}</p>
           }
 
           @if (mensajePago) {
@@ -222,9 +257,9 @@
             }
             <span
               class="etiqueta-estado"
-              [class.disponible]="stockDisponible(producto.id_producto, producto.existencia) > 0"
-              [class.no-disponible]="stockDisponible(producto.id_producto, producto.existencia) <= 0"
-            >{{ stockDisponible(producto.id_producto, producto.existencia) > 0 ? 'Disponible' : 'Agotado' }}</span>
+              [class.disponible]="producto.existencia > 0"
+              [class.no-disponible]="producto.existencia <= 0"
+            >{{ producto.existencia > 0 ? 'Disponible' : 'Agotado' }}</span>
           </div>
           <div class="info-producto">
             <h3>{{ producto.nombre }}</h3>
@@ -255,13 +290,13 @@
         <p class="detalle"><strong>Descripción:</strong> {{ productoSeleccionado.descripcion }}</p>
         <p class="detalle"><strong>Precio:</strong> {{ formatearPrecio(productoSeleccionado.precio) }}</p>
         <p class="detalle"><strong>Categoría:</strong> {{ productoSeleccionado.categoria }}</p>
-        <p class="detalle"><strong>Existencia:</strong> {{ stockDisponible(productoSeleccionado.id_producto, productoSeleccionado.existencia) }}</p>
+        <p class="detalle"><strong>Existencia:</strong> {{ productoSeleccionado.existencia }}</p>
         <p class="detalle"><strong>Estado:</strong>
           <span
             class="etiqueta-estado"
-            [class.disponible]="stockDisponible(productoSeleccionado.id_producto, productoSeleccionado.existencia) > 0"
-            [class.no-disponible]="stockDisponible(productoSeleccionado.id_producto, productoSeleccionado.existencia) <= 0"
-          >{{ stockDisponible(productoSeleccionado.id_producto, productoSeleccionado.existencia) > 0 ? 'Disponible' : 'No disponible' }}</span>
+            [class.disponible]="productoSeleccionado.existencia > 0"
+            [class.no-disponible]="productoSeleccionado.existencia <= 0"
+          >{{ productoSeleccionado.existencia > 0 ? 'Disponible' : 'No disponible' }}</span>
         </p>
 
         @if (mensajeCarrito) {
@@ -274,14 +309,14 @@
             id="cantidad-agregar"
             type="number"
             min="1"
-            [max]="stockDisponible(productoSeleccionado.id_producto, productoSeleccionado.existencia)"
+            [max]="productoSeleccionado.existencia"
             [(ngModel)]="cantidadAgregar"
           />
-          <span class="stock-disponible">Stock: {{ stockDisponible(productoSeleccionado.id_producto, productoSeleccionado.existencia) }}</span>
+          <span class="stock-disponible">Stock: {{ productoSeleccionado.existencia }}</span>
         </div>
 
         <div class="acciones-modal">
-          <button type="button" class="btn btn-aceptar" [disabled]="agregandoCarrito || stockDisponible(productoSeleccionado.id_producto, productoSeleccionado.existencia) === 0" (click)="agregarAlCarrito()">
+          <button type="button" class="btn btn-aceptar" [disabled]="agregandoCarrito || productoSeleccionado.existencia === 0" (click)="agregarAlCarrito()">
             {{ agregandoCarrito ? 'Agregando…' : 'Añadir al carrito' }}
           </button>
           <button type="button" class="btn btn-eliminar" (click)="cerrarDetalle()">Cancelar</button>

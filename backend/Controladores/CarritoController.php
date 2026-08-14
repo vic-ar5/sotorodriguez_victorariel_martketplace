@@ -87,18 +87,27 @@ class CarritoController
         $idProducto = (int) Http::param('id');
         $cantidad = (int) Http::body('cantidad', 0);
 
-        if ($cantidad < 1) {
-            Flight::json(['error' => 'La cantidad debe ser al menos 1'], 422);
-            return;
-        }
+        $resultado = $this->modelo->ModificarCantidadDelProducto(
+            (int) $usuario['sub'],
+            $idProducto,
+            $cantidad,
+        );
 
-        if (!$this->modelo->ModificarCantidadDelProducto((int) $usuario['sub'], $idProducto, $cantidad)) {
-            Flight::json([
-                'error'                => 'El producto no está en tu carrito',
-                'debug_id_producto'    => $idProducto,
-                'debug_id_usuario_sub' => (int) $usuario['sub'],
-                'debug_carrito_activo' => $this->modelo->ConsultarCarritoActivo((int) $usuario['sub']),
-            ], 404);
+        if (!$resultado['ok']) {
+            if ($resultado['error'] === 'cantidad_invalida') {
+                Flight::json(['error' => 'La cantidad debe ser al menos 1'], 422);
+                return;
+            }
+
+            if ($resultado['error'] === 'supera_stock') {
+                Flight::json([
+                    'error' => 'Superaste el stock del producto',
+                    'stock' => $resultado['stock'],
+                ], 422);
+                return;
+            }
+
+            Flight::json(['error' => 'El producto no está en tu carrito'], 404);
             return;
         }
 

@@ -354,4 +354,40 @@ class ProductoModel
 
         return $fila === false ? null : $fila;
     }
+
+    /**
+     * Descuenta existencias al agregar al carrito; inactiva el producto
+     * si se queda sin stock.
+     */
+    public function DescontarStock(int $idProducto, int $cantidad): void
+    {
+        $sql = "UPDATE productos
+                SET existencia = existencia - :cantidad,
+                    estado = CASE
+                                WHEN existencia - :cantidad <= 0 THEN 'inactivo'
+                                ELSE estado
+                             END
+                WHERE id_producto = :id_producto";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['cantidad' => $cantidad, 'id_producto' => $idProducto]);
+    }
+
+    /**
+     * Devuelve existencias al quitar del carrito; reactiva el producto
+     * si vuelve a tener stock.
+     */
+    public function RestaurarStock(int $idProducto, int $cantidad): void
+    {
+        $sql = "UPDATE productos
+                SET existencia = existencia + :cantidad,
+                    estado = CASE
+                                WHEN existencia + :cantidad > 0 THEN 'activo'
+                                ELSE estado
+                             END
+                WHERE id_producto = :id_producto";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['cantidad' => $cantidad, 'id_producto' => $idProducto]);
+    }
 }

@@ -5,6 +5,7 @@ import { Logotipo } from '../../../auth/logotipo';
 import { AuthService } from '../../../auth/auth.service';
 import {
   Carrito,
+  CarritoItem,
   Categoria,
   CompradorService,
   DetalleProducto,
@@ -55,6 +56,7 @@ export class CompradorPanel implements OnInit {
   protected carritoAbierto = false;
   protected carritoTotalProductos = 0;
   protected mensajePago = '';
+  protected mensajeCart = '';
 
   protected notificacion = '';
   private temporizadorNotificacion?: ReturnType<typeof setTimeout>;
@@ -229,16 +231,6 @@ export class CompradorPanel implements OnInit {
     );
   }
 
-  protected cantidadEnCarrito(idProducto: number): number {
-    return this.carrito.items
-      .filter((item) => item.id_producto === idProducto)
-      .reduce((suma, item) => suma + item.cantidad, 0);
-  }
-
-  protected stockDisponible(idProducto: number, existencia: number): number {
-    return Math.max(0, existencia - this.cantidadEnCarrito(idProducto));
-  }
-
   protected agregarAlCarrito(): void {
     if (!this.token || !this.productoSeleccionado) {
       return;
@@ -246,10 +238,7 @@ export class CompradorPanel implements OnInit {
 
     const detalle = this.productoSeleccionado;
     const cantidad = Number(this.cantidadAgregar);
-    const disponible = this.stockDisponible(
-      detalle.id_producto,
-      detalle.existencia,
-    );
+    const disponible = detalle.existencia;
 
     if (!cantidad || cantidad < 1) {
       this.mensajeCarrito = 'La cantidad debe ser al menos 1.';
@@ -273,7 +262,14 @@ export class CompradorPanel implements OnInit {
           this.mostrarNotificacion(
             `${detalle.nombre} agregado al carrito (×${cantidad}).`,
           );
+          if (this.productoSeleccionado) {
+            this.productoSeleccionado.existencia = Math.max(
+              0,
+              this.productoSeleccionado.existencia - cantidad,
+            );
+          }
           this.cargarCarrito();
+          this.cargarProductos();
         },
         error: (err) => {
           this.agregandoCarrito = false;
@@ -309,8 +305,62 @@ export class CompradorPanel implements OnInit {
   protected alternarCarrito(): void {
     this.carritoAbierto = !this.carritoAbierto;
     this.mensajePago = '';
+    this.mensajeCart = '';
     this.menuAbierto = false;
     this.filtrosAbiertos = false;
+  }
+
+  protected cambiarCantidad(item: CarritoItem, nueva: string | number): void {
+    if (!this.token) {
+      return;
+    }
+
+    const cantidad = Number(nueva);
+
+    if (!cantidad || cantidad < 1) {
+      return;
+    }
+
+    if (cantidad > item.existencia + item.cantidad) {
+      this.mensajeCart = `No hay más stock de "${item.nombre}" (máximo ${item.existencia + item.cantidad}).`;
+      return;
+    }
+
+    this.servicio
+      .modificarCantidad(this.token, item.id_producto, cantidad)
+      .subscribe({
+        next: () => {
+          this.mensajeCart = '';
+          this.cargarCarrito();
+          this.cargarProductos();
+        },
+        error: (err) => {
+          const mensaje = err?.error?.error ?? '';
+          if (String(mensaje).toLowerCase().includes('stock')) {
+            this.mensajeCart = 'Superaste el stock del producto.';
+          } else {
+            this.mensajeCart = 'No se pudo actualizar la cantidad.';
+          }
+        },
+      });
+  }
+
+  protected eliminarItem(item: CarritoItem): void {
+    if (!this.token) {
+      return;
+    }
+    this.servicio
+      .eliminarItemDelCarrito(this.token, item.id_producto)
+      .subscribe({
+        next: () => {
+          this.mensajeCart = '';
+          this.cargarCarrito();
+          this.cargarProductos();
+        },
+        error: () => {
+          this.mensajeCart = 'No se pudo eliminar el producto del carrito.';
+        },
+      });
   }
 
   protected vaciarCarrito(): void {
@@ -323,6 +373,8 @@ export class CompradorPanel implements OnInit {
         this.carritoTotalProductos = 0;
         this.carritoAbierto = false;
         this.mensajePago = '';
+        this.mensajeCart = '';
+        this.cargarProductos();
       },
       error: () => {
         this.carritoAbierto = false;

@@ -45,7 +45,8 @@ class CarritoModel
     }
 
     /**
-     * Agrega un producto al carrito activo (crea el carrito si no existe).
+     * Agrega un producto al carrito activo (crea el carrito si no existe)
+     * y descuenta la cantidad del stock del producto.
      * Devuelve:
      *   ['ok' => true,  'id_carrito' => int]                   si se agregó,
      *   ['ok' => false, 'error' => 'no_disponible']            si el producto no está activo,
@@ -59,6 +60,17 @@ class CarritoModel
             return ['ok' => false, 'error' => 'no_disponible'];
         }
 
+        $stock = (int) $producto['existencia'];
+
+        if ($cantidad > $stock) {
+            return [
+                'ok'     => false,
+                'error'  => 'supera_stock',
+                'stock'  => $stock,
+                'maximo' => $stock,
+            ];
+        }
+
         $idCarrito = $this->ConsultarCarritoActivo($idUsuario);
 
         if ($idCarrito === null) {
@@ -67,16 +79,6 @@ class CarritoModel
 
         $existente = $this->ConsultarCantidadExistente($idCarrito, $idProducto);
         $nuevaCantidad = $existente + $cantidad;
-        $stock = (int) $producto['existencia'];
-
-        if ($nuevaCantidad > $stock) {
-            return [
-                'ok'     => false,
-                'error'  => 'supera_stock',
-                'stock'  => $stock,
-                'maximo' => max(0, $stock - $existente),
-            ];
-        }
 
         $sql = "INSERT INTO detalle_carrito (id_carrito, id_producto, cantidad, precio_unitario)
                 VALUES (:id_carrito, :id_producto, :cantidad, :precio_unitario)
@@ -90,6 +92,8 @@ class CarritoModel
             'cantidad'        => $nuevaCantidad,
             'precio_unitario' => $producto['precio'],
         ]);
+
+        (new ProductoModel())->DescontarStock($idProducto, $cantidad);
 
         return ['ok' => true, 'id_carrito' => $idCarrito];
     }
@@ -111,7 +115,8 @@ class CarritoModel
     }
 
     /**
-     * Elimina todos los productos del carrito activo del usuario.
+     * Elimina todos los productos del carrito activo del usuario y
+     * devuelve el stock a cada producto.
      */
     public function VaciarCarrito(int $idUsuario): bool
     {
@@ -119,6 +124,15 @@ class CarritoModel
 
         if ($idCarrito === null) {
             return false;
+        }
+
+        $items = $this->ConsultarDetallesDelCarrito($idCarrito)['items'];
+
+        foreach ($items as $item) {
+            (new ProductoModel())->RestaurarStock(
+                (int) $item['id_producto'],
+                (int) $item['cantidad'],
+            );
         }
 
         $sql = "DELETE FROM detalle_carrito WHERE id_carrito = :id_carrito";
@@ -129,12 +143,53 @@ class CarritoModel
         return true;
     }
 
-    public function ModificarCantidadDelProducto(int $idUsuario, int $idProducto, int $cantidad): bool
+    /**
+     * Cambia la cantidad de un producto en el carrito ajustando el stock
+     * del producto. Devuelve:
+     *   ['ok' => true]                                        si se actualizó,
+     *   ['ok' => false, 'error' => 'no_carrito'|'no_en_carrito'|'cantidad_invalida'|'no_disponible']
+     *   ['ok' => false, 'error' => 'supera_stock', 'stock']   si excede la existencia.
+     */
+    public function ModificarCantidadDelProducto(int $idUsuario, int $idProducto, int $cantidad): array
     {
         $idCarrito = $this->ConsultarCarritoActivo($idUsuario);
 
         if ($idCarrito === null) {
-            return false;
+            return ['ok' => false, 'error' => 'no_carrito'];
+        }
+
+        $actual = $this->ConsultarCantidadExistente($idCarrito, $idProducto);
+
+        if ($actual === 0) {
+            return ['ok' => false, 'error' => 'no_en_carrito'];
+        }
+
+        if ($cantidad < 1) {
+            return ['ok' => false, 'error' => 'cantidad_invalida'];
+        }
+
+        $diferencia = $cantidad - $actual;
+
+        if ($diferencia > 0) {
+            $producto = (new ProductoModel())->ConsultarProductoActivo($idProducto);
+
+            if ($producto === null) {
+                return ['ok' => false, 'error' => 'no_disponible'];
+            }
+
+            $stock = (int) $producto['existencia'];
+
+            if ($diferencia > $stock) {
+                return [
+                    'ok'    => false,
+                    'error' => 'supera_stock',
+                    'stock' => $stock,
+                ];
+            }
+
+            (new ProductoModel())->DescontarStock($idProducto, $diferencia);
+        } elseif ($diferencia < 0) {
+            (new ProductoModel())->RestaurarStock($idProducto, -$diferencia);
         }
 
         $sql = "UPDATE detalle_carrito
@@ -148,14 +203,24 @@ class CarritoModel
             'id_producto' => $idProducto,
         ]);
 
-        return $stmt->rowCount() > 0;
+        return ['ok' => true];
     }
 
+    /**
+     * Elimina un producto del carrito activo del usuario y le devuelve
+     * el stock al producto.
+     */
     public function EliminarProductoDelCarrito(int $idUsuario, int $idProducto): bool
     {
         $idCarrito = $this->ConsultarCarritoActivo($idUsuario);
 
         if ($idCarrito === null) {
+            return false;
+        }
+
+        $cantidad = $this->ConsultarCantidadExistente($idCarrito, $idProducto);
+
+        if ($cantidad === 0) {
             return false;
         }
 
@@ -168,7 +233,9 @@ class CarritoModel
             'id_producto' => $idProducto,
         ]);
 
-        return $stmt->rowCount() > 0;
+        (new ProductoModel())->RestaurarStock($idProducto, $cantidad);
+
+        return true;
     }
 
     /**
