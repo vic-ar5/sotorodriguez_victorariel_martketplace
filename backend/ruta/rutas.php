@@ -33,6 +33,7 @@ Flight::group('/api', function (): void {
     Flight::route('POST /carrito/items', [CarritoController::class, 'agregar']);
     Flight::route('PATCH /carrito/items/@id:[0-9]+', [CarritoController::class, 'modificarCantidad']);
     Flight::route('DELETE /carrito/items/@id:[0-9]+', [CarritoController::class, 'eliminar']);
+    Flight::route('DELETE /carrito', [CarritoController::class, 'vaciar']);
 
     Flight::route('GET /usuarios/mi-perfil', [UsuarioController::class, 'miPerfil']);
     Flight::route('PUT /usuarios/mi-perfil', [UsuarioController::class, 'actualizarMiPerfil']);

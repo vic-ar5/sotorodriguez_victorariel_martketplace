@@ -46,14 +46,17 @@ class CarritoModel
 
     /**
      * Agrega un producto al carrito activo (crea el carrito si no existe).
-     * Devuelve el id del carrito o null si el producto no está activo.
+     * Devuelve:
+     *   ['ok' => true,  'id_carrito' => int]                   si se agregó,
+     *   ['ok' => false, 'error' => 'no_disponible']            si el producto no está activo,
+     *   ['ok' => false, 'error' => 'supera_stock', 'stock', 'maximo'] si excede la existencia.
      */
-    public function AgregarProductoAlCarrito(int $idUsuario, int $idProducto, int $cantidad): ?int
+    public function AgregarProductoAlCarrito(int $idUsuario, int $idProducto, int $cantidad): array
     {
-        $precio = (new ProductoModel())->ConsultarPrecioDelProducto($idProducto);
+        $producto = (new ProductoModel())->ConsultarProductoActivo($idProducto);
 
-        if ($precio === null) {
-            return null;
+        if ($producto === null) {
+            return ['ok' => false, 'error' => 'no_disponible'];
         }
 
         $idCarrito = $this->ConsultarCarritoActivo($idUsuario);
@@ -62,20 +65,68 @@ class CarritoModel
             $idCarrito = $this->CrearCarrito($idUsuario);
         }
 
+        $existente = $this->ConsultarCantidadExistente($idCarrito, $idProducto);
+        $nuevaCantidad = $existente + $cantidad;
+        $stock = (int) $producto['existencia'];
+
+        if ($nuevaCantidad > $stock) {
+            return [
+                'ok'     => false,
+                'error'  => 'supera_stock',
+                'stock'  => $stock,
+                'maximo' => max(0, $stock - $existente),
+            ];
+        }
+
         $sql = "INSERT INTO detalle_carrito (id_carrito, id_producto, cantidad, precio_unitario)
                 VALUES (:id_carrito, :id_producto, :cantidad, :precio_unitario)
                 ON CONFLICT (id_carrito, id_producto)
-                DO UPDATE SET cantidad = detalle_carrito.cantidad + EXCLUDED.cantidad";
+                DO UPDATE SET cantidad = EXCLUDED.cantidad";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             'id_carrito'      => $idCarrito,
             'id_producto'     => $idProducto,
-            'cantidad'        => $cantidad,
-            'precio_unitario' => $precio,
+            'cantidad'        => $nuevaCantidad,
+            'precio_unitario' => $producto['precio'],
         ]);
 
-        return $idCarrito;
+        return ['ok' => true, 'id_carrito' => $idCarrito];
+    }
+
+    /**
+     * Cantidad actual de un producto dentro de un carrito.
+     */
+    public function ConsultarCantidadExistente(int $idCarrito, int $idProducto): int
+    {
+        $sql = "SELECT cantidad FROM detalle_carrito
+                WHERE id_carrito = :id_carrito AND id_producto = :id_producto";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_carrito' => $idCarrito, 'id_producto' => $idProducto]);
+
+        $cantidad = $stmt->fetchColumn();
+
+        return $cantidad === false ? 0 : (int) $cantidad;
+    }
+
+    /**
+     * Elimina todos los productos del carrito activo del usuario.
+     */
+    public function VaciarCarrito(int $idUsuario): bool
+    {
+        $idCarrito = $this->ConsultarCarritoActivo($idUsuario);
+
+        if ($idCarrito === null) {
+            return false;
+        }
+
+        $sql = "DELETE FROM detalle_carrito WHERE id_carrito = :id_carrito";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_carrito' => $idCarrito]);
+
+        return true;
     }
 
     public function ModificarCantidadDelProducto(int $idUsuario, int $idProducto, int $cantidad): bool

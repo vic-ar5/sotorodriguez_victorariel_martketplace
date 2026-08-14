@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Logotipo } from '../../../auth/logotipo';
 import { AuthService } from '../../../auth/auth.service';
 import {
+  Carrito,
   Categoria,
   CompradorService,
   DetalleProducto,
@@ -48,6 +49,15 @@ export class CompradorPanel implements OnInit {
   protected productoSeleccionado: DetalleProducto | null = null;
   protected agregandoCarrito = false;
   protected mensajeCarrito = '';
+  protected cantidadAgregar = 1;
+
+  protected carrito: Carrito = { id_carrito: null, items: [], total: 0 };
+  protected carritoAbierto = false;
+  protected carritoTotalProductos = 0;
+  protected mensajePago = '';
+
+  protected notificacion = '';
+  private temporizadorNotificacion?: ReturnType<typeof setTimeout>;
 
   ngOnInit(): void {
     if (!this.token) {
@@ -57,6 +67,7 @@ export class CompradorPanel implements OnInit {
     this.cargarProductos();
     this.cargarPerfil();
     this.cargarCategorias();
+    this.cargarCarrito();
   }
 
   protected cargarProductos(): void {
@@ -195,6 +206,7 @@ export class CompradorPanel implements OnInit {
 
   protected abrirDetalle(producto: Producto): void {
     this.mensajeCarrito = '';
+    this.cantidadAgregar = 1;
     this.servicio.detalleProducto(producto.id_producto).subscribe({
       next: (detalle) => {
         this.productoSeleccionado = detalle;
@@ -217,25 +229,126 @@ export class CompradorPanel implements OnInit {
     );
   }
 
+  protected cantidadEnCarrito(idProducto: number): number {
+    return this.carrito.items
+      .filter((item) => item.id_producto === idProducto)
+      .reduce((suma, item) => suma + item.cantidad, 0);
+  }
+
+  protected stockDisponible(idProducto: number, existencia: number): number {
+    return Math.max(0, existencia - this.cantidadEnCarrito(idProducto));
+  }
+
   protected agregarAlCarrito(): void {
     if (!this.token || !this.productoSeleccionado) {
       return;
     }
+
+    const detalle = this.productoSeleccionado;
+    const cantidad = Number(this.cantidadAgregar);
+    const disponible = this.stockDisponible(
+      detalle.id_producto,
+      detalle.existencia,
+    );
+
+    if (!cantidad || cantidad < 1) {
+      this.mensajeCarrito = 'La cantidad debe ser al menos 1.';
+      return;
+    }
+
+    if (cantidad > disponible) {
+      this.mensajeCarrito = `Superaste el stock del producto (máximo ${disponible}).`;
+      return;
+    }
+
     this.agregandoCarrito = true;
     this.mensajeCarrito = '';
     this.servicio
-      .agregarAlCarrito(this.token, this.productoSeleccionado.id_producto)
+      .agregarAlCarrito(this.token, detalle.id_producto, cantidad)
       .subscribe({
         next: () => {
           this.agregandoCarrito = false;
-          this.mensajeCarrito = 'Producto agregado al carrito.';
-        },
-        error: () => {
-          this.agregandoCarrito = false;
           this.mensajeCarrito =
-            'No se pudo agregar el producto al carrito.';
+            'Producto agregado al carrito.';
+          this.mostrarNotificacion(
+            `${detalle.nombre} agregado al carrito (×${cantidad}).`,
+          );
+          this.cargarCarrito();
+        },
+        error: (err) => {
+          this.agregandoCarrito = false;
+          const mensaje = err?.error?.error ?? '';
+          if (String(mensaje).toLowerCase().includes('stock')) {
+            this.mensajeCarrito = 'Superaste el stock del producto.';
+          } else {
+            this.mensajeCarrito =
+              'No se pudo agregar el producto al carrito.';
+          }
         },
       });
+  }
+
+  protected cargarCarrito(): void {
+    if (!this.token) {
+      return;
+    }
+    this.servicio.carrito(this.token).subscribe({
+      next: (carrito) => {
+        this.carrito = carrito;
+        this.carritoTotalProductos = carrito.items.reduce(
+          (suma, item) => suma + item.cantidad,
+          0,
+        );
+      },
+      error: () => {
+        // Si falla, el carrito se conserva tal como está.
+      },
+    });
+  }
+
+  protected alternarCarrito(): void {
+    this.carritoAbierto = !this.carritoAbierto;
+    this.mensajePago = '';
+    this.menuAbierto = false;
+    this.filtrosAbiertos = false;
+  }
+
+  protected vaciarCarrito(): void {
+    if (!this.token) {
+      return;
+    }
+    this.servicio.vaciarCarrito(this.token).subscribe({
+      next: () => {
+        this.carrito = { id_carrito: null, items: [], total: 0 };
+        this.carritoTotalProductos = 0;
+        this.carritoAbierto = false;
+        this.mensajePago = '';
+      },
+      error: () => {
+        this.carritoAbierto = false;
+      },
+    });
+  }
+
+  protected pagarCarrito(): void {
+    this.mensajePago = 'El pago estará disponible próximamente.';
+  }
+
+  protected mostrarNotificacion(mensaje: string): void {
+    this.notificacion = mensaje;
+    if (this.temporizadorNotificacion) {
+      clearTimeout(this.temporizadorNotificacion);
+    }
+    this.temporizadorNotificacion = setTimeout(() => {
+      this.notificacion = '';
+    }, 10000);
+  }
+
+  protected cerrarNotificacion(): void {
+    if (this.temporizadorNotificacion) {
+      clearTimeout(this.temporizadorNotificacion);
+    }
+    this.notificacion = '';
   }
 
   protected formatearPrecio(precio: string | number | undefined): string {

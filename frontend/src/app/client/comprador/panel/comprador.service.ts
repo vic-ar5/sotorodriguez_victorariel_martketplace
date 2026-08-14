@@ -39,6 +39,22 @@ export interface DetalleProducto {
   imagenes: { url_publica: string }[];
 }
 
+export interface CarritoItem {
+  id_detalle_carrito: number;
+  id_producto: number;
+  nombre: string;
+  cantidad: number;
+  precio_unitario: string | number;
+  subtotal: string | number;
+  existencia: number;
+}
+
+export interface Carrito {
+  id_carrito: number | null;
+  items: CarritoItem[];
+  total: string | number;
+}
+
 export interface MiPerfil {
   id_usuario: number;
   nombre_usuario: string;
@@ -111,6 +127,18 @@ export class CompradorService {
       { id_producto: idProducto, cantidad },
       { headers: this.headers(token) },
     );
+  }
+
+  carrito(token: string): Observable<Carrito> {
+    return this.http.get<Carrito>(`${API_URL}/carrito`, {
+      headers: this.headers(token),
+    });
+  }
+
+  vaciarCarrito(token: string): Observable<unknown> {
+    return this.http.delete(`${API_URL}/carrito`, {
+      headers: this.headers(token),
+    });
   }
 
   private headers(token: string): HttpHeaders {

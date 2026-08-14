@@ -116,11 +116,16 @@ class PedidoModel
 
     /**
      * Resta las cantidades compradas a la existencia de cada producto.
+     * Si un producto se queda sin existencias, se inactiva automáticamente.
      */
     private function DescontarExistencias(int $idUsuario): void
     {
         $sql = "UPDATE productos pr
-                SET existencia = pr.existencia - dc.cantidad
+                SET existencia = pr.existencia - dc.cantidad,
+                    estado = CASE
+                                WHEN pr.existencia - dc.cantidad <= 0 THEN 'inactivo'
+                                ELSE pr.estado
+                             END
                 FROM detalle_carrito dc
                 JOIN carrito c ON dc.id_carrito = c.id_carrito
                 WHERE dc.id_producto = pr.id_producto

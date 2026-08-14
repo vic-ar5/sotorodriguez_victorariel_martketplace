@@ -136,6 +136,181 @@
   background-color: rgba(255, 255, 255, 0.3);
 }
 
+/* ---------------------- Carrito ---------------------- */
+.contenedor-carrito {
+  position: relative;
+}
+
+.indicador-carrito {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 4px;
+  border-radius: 50%;
+  background-color: #22c55e;
+  color: var(--blanco);
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+  z-index: 2;
+}
+
+.panel-carrito {
+  position: absolute;
+  top: calc(100% + 0.75rem);
+  right: 0;
+  width: 380px;
+  max-width: 85vw;
+  padding: 1.25rem;
+  background-color: var(--blanco);
+  border: 1px solid var(--gris-borde);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(30, 77, 130, 0.2);
+  color: var(--texto);
+  z-index: 50;
+}
+
+.estado-carrito {
+  text-align: center;
+  color: var(--texto-suave);
+  margin: 0;
+  padding: 0.5rem 0;
+}
+
+.lista-carrito {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.item-carrito {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid var(--gris-borde);
+}
+
+.info-item-carrito {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.info-item-carrito strong {
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info-item-carrito span {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
+}
+
+.subtotal-item-carrito {
+  font-weight: 700;
+  color: var(--azul-principal);
+  flex-shrink: 0;
+}
+
+.totales-carrito {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 2px solid var(--azul-principal);
+}
+
+.linea-total {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.25rem 0;
+  color: var(--texto-suave);
+  font-size: 0.95rem;
+}
+
+.linea-total.total-carrito {
+  color: var(--texto);
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.mensaje-pago {
+  margin: 0.75rem 0 0;
+  font-weight: 600;
+  color: var(--azul-principal);
+}
+
+.acciones-carrito {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.acciones-carrito .btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+/* ---------------------- Notificación lateral ---------------------- */
+.notificacion {
+  position: fixed;
+  top: 6.5rem;
+  right: 1.5rem;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 360px;
+  padding: 0.9rem 1.1rem;
+  background-color: var(--azul-principal);
+  color: var(--blanco);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(30, 77, 130, 0.35);
+  font-size: 0.95rem;
+  animation: aparecer-notificacion 0.25s ease;
+}
+
+@keyframes aparecer-notificacion {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.cerrar-notificacion {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: var(--blanco);
+  cursor: pointer;
+}
+
+.cerrar-notificacion:hover {
+  background-color: rgba(255, 255, 255, 0.35);
+}
+
 /* ---------------------- Menú de cuenta ---------------------- */
 .contenedor-cuenta {
   position: relative;
@@ -457,6 +632,37 @@
   font-weight: 600;
   color: var(--azul-principal);
   margin: 0.75rem 0 0;
+}
+
+.cantidad-modal {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.cantidad-modal label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.cantidad-modal input {
+  width: 80px;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--gris-borde);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.cantidad-modal input:focus {
+  border-color: var(--azul-hover);
+  box-shadow: 0 0 0 3px var(--azul-claro);
+}
+
+.stock-disponible {
+  font-size: 0.85rem;
+  color: var(--texto-suave);
 }
 
 .acciones-modal {

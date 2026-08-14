@@ -303,7 +303,14 @@ class ProductoModel
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return $stmt->rowCount() > 0;
+        // Si el producto se queda sin existencias, se inactiva automáticamente.
+        $sql = "UPDATE productos SET estado = 'inactivo'
+                WHERE id_producto = :id_producto AND existencia <= 0";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_producto' => $idProducto]);
+
+        return true;
     }
 
     public function CambiarEstadoDelProducto(int $idProducto, string $estado): bool
@@ -330,5 +337,21 @@ class ProductoModel
         $precio = $stmt->fetchColumn();
 
         return $precio === false ? null : (float) $precio;
+    }
+
+    /**
+     * Precio y existencia de un producto activo (para validar el carrito).
+     */
+    public function ConsultarProductoActivo(int $idProducto): ?array
+    {
+        $sql = "SELECT precio, existencia FROM productos
+                WHERE id_producto = :id_producto AND estado = 'activo'";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id_producto' => $idProducto]);
+
+        $fila = $stmt->fetch();
+
+        return $fila === false ? null : $fila;
     }
 }
