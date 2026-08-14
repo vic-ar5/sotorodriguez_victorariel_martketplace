@@ -9,6 +9,7 @@ const NOMBRE_LETRAS = /^[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ ]+$/;
 const USUARIO_ALFANUMERICO = /^[a-zA-Z0-9_]+$/;
 const SIN_ESPACIOS = /^\S+$/;
 const DIGITO = /^[0-9]$/;
+const CARACTERES_CORREO = /^[a-zA-Z0-9.!#$%&'*\/=?^_`{|}~@-]+$/;
 
 @Component({
   selector: 'app-registro',
@@ -32,7 +33,12 @@ export class Registro {
     ],
     correo: [
       '',
-      [Validators.required, Validators.email, Validators.maxLength(150)],
+      [
+        Validators.required,
+        Validators.email,
+        Validators.maxLength(150),
+        Validators.pattern(CARACTERES_CORREO),
+      ],
     ],
     contrasena: [
       '',
@@ -72,6 +78,7 @@ export class Registro {
   protected readonly permitidosUsuario = USUARIO_ALFANUMERICO;
   protected readonly permitidosPassword = SIN_ESPACIOS;
   protected readonly permitidosDigito = DIGITO;
+  protected readonly permitidosCorreo = CARACTERES_CORREO;
 
   protected bloquearCaracteres(
     campo: string,
@@ -101,7 +108,7 @@ export class Registro {
     const valor =
       input.value.slice(0, inicio) + filtrado + input.value.slice(fin);
 
-    this.formulario.controls[campo].setValue(valor);
+    this.formulario.get(campo)?.setValue(valor);
     input.setSelectionRange(inicio + filtrado.length, inicio + filtrado.length);
   }
 
@@ -167,6 +174,8 @@ export class Registro {
           return 'Solo letras, números y guion bajo.';
         case 'contrasena':
           return 'La contraseña no puede contener espacios.';
+        case 'correo':
+          return 'El correo contiene caracteres no válidos.';
         default:
           return 'Solo se permiten letras.';
       }

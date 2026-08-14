@@ -5,6 +5,7 @@ import { AuthService } from '../auth.service';
 import { Logotipo } from '../logotipo';
 
 const SIN_ESPACIOS = /^\S+$/;
+const CARACTERES_CORREO = /^[a-zA-Z0-9.!#$%&'*\/=?^_`{|}~@-]+$/;
 
 @Component({
   selector: 'app-login',
@@ -20,7 +21,12 @@ export class Login {
   protected readonly formulario = this.fb.nonNullable.group({
     correo: [
       '',
-      [Validators.required, Validators.email, Validators.maxLength(150)],
+      [
+        Validators.required,
+        Validators.email,
+        Validators.maxLength(150),
+        Validators.pattern(CARACTERES_CORREO),
+      ],
     ],
     contrasena: ['', [Validators.required, Validators.pattern(SIN_ESPACIOS)]],
   });
@@ -30,6 +36,7 @@ export class Login {
   protected cuentaCreada = false;
 
   protected readonly permitidosPassword = SIN_ESPACIOS;
+  protected readonly permitidosCorreo = CARACTERES_CORREO;
 
   protected bloquearCaracteres(
     campo: string,
@@ -59,7 +66,7 @@ export class Login {
     const valor =
       input.value.slice(0, inicio) + filtrado + input.value.slice(fin);
 
-    this.formulario.controls[campo].setValue(valor);
+    this.formulario.get(campo)?.setValue(valor);
     input.setSelectionRange(inicio + filtrado.length, inicio + filtrado.length);
   }
 
@@ -110,7 +117,9 @@ export class Login {
       return `Máximo ${error.requiredLength} caracteres.`;
     }
     if (control.hasError('pattern')) {
-      return 'La contraseña no puede contener espacios.';
+      return campo === 'correo'
+        ? 'El correo contiene caracteres no válidos.'
+        : 'La contraseña no puede contener espacios.';
     }
     return '';
   }

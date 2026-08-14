@@ -32,6 +32,7 @@
           autocomplete="email"
           placeholder="tucorreo@ejemplo.com"
           maxlength="150"
+          (beforeinput)="bloquearCaracteres('correo', permitidosCorreo, $event)"
         />
         @if (mensajeError('correo')) {
           <span class="error">{{ mensajeError('correo') }}</span>

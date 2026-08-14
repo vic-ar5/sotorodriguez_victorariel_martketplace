@@ -26,6 +26,7 @@
           formControlName="correo"
           autocomplete="email"
           placeholder="tucorreo@ejemplo.com"
+          (beforeinput)="bloquearCaracteres('correo', permitidosCorreo, $event)"
         />
         @if (mensajeError('correo')) {
           <span class="error">{{ mensajeError('correo') }}</span>
