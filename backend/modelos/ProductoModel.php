@@ -119,7 +119,8 @@ class ProductoModel
      */
     public function DetallesProducto(int $idProducto): ?array
     {
-        $sql = "SELECT p.id_producto, p.nombre, p.descripcion, p.precio, p.existencia, p.moneda,
+        $sql = "SELECT p.id_producto, p.identificador, p.nombre, p.descripcion, p.precio,
+                       p.existencia, p.moneda, p.estado,
                        p.fecha_registro, p.fecha_actualizacion,
                        c.nombre AS categoria,
                        v.nombre_usuario AS vendedor,

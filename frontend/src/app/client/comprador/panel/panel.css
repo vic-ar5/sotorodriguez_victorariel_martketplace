@@ -218,6 +218,7 @@
 }
 
 .imagen-producto {
+  position: relative;
   aspect-ratio: 1 / 1;
   background-color: var(--azul-claro);
   display: flex;
@@ -241,6 +242,34 @@
   justify-content: center;
   color: var(--texto-suave);
   background-color: var(--azul-claro);
+}
+
+/* Etiqueta de disponibilidad (Disponible azul / No disponible gris) */
+.etiqueta-estado {
+  display: inline-block;
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.etiqueta-estado.disponible {
+  background-color: var(--azul-principal);
+  color: var(--blanco);
+}
+
+.etiqueta-estado.no-disponible {
+  background-color: var(--gris-fondo);
+  color: var(--texto-suave);
+  border: 1px solid var(--gris-borde);
+}
+
+.imagen-producto .etiqueta-estado {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 2;
 }
 
 .info-producto {

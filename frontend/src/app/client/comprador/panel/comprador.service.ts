@@ -18,11 +18,14 @@ export interface Producto {
 
 export interface DetalleProducto {
   id_producto: number;
+  identificador: string;
   nombre: string;
   descripcion: string;
   precio: string | number;
   existencia: number;
   moneda: string;
+  estado: string;
+  fecha_registro: string;
   categoria: string;
   vendedor: string;
   nombre_vendedor: string;

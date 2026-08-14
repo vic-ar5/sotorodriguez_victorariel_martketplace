@@ -27,21 +27,21 @@
           @if (perfil) {
             <div class="cabecera-cuenta">
               <div class="avatar">{{ inicialPerfil() }}</div>
-              <div class="identidad">
-                <strong>{{ perfil.nombre }} {{ perfil.apellido_paterno }}</strong>
-                <span>{{ perfil.correo }}</span>
-              </div>
+            <div class="identidad">
+              <strong>{{ perfil.nombre_usuario }}</strong>
+              <span>{{ perfil.correo }}</span>
+            </div>
             </div>
 
             @if (!editandoPerfil) {
               <dl class="datos-cuenta">
                 <div>
-                  <dt>Nombre de usuario</dt>
-                  <dd>{{ perfil.nombre_usuario }}</dd>
+                  <dt>Nombre</dt>
+                  <dd>{{ perfil.nombre }}</dd>
                 </div>
                 <div>
-                  <dt>Apellido materno</dt>
-                  <dd>{{ perfil.apellido_materno || '—' }}</dd>
+                  <dt>Apellido paterno</dt>
+                  <dd>{{ perfil.apellido_paterno }}</dd>
                 </div>
                 <div>
                   <dt>Teléfono</dt>
@@ -57,10 +57,6 @@
                 <label>
                   Apellido paterno
                   <input type="text" [(ngModel)]="perfilEditado.apellido_paterno" maxlength="80" />
-                </label>
-                <label>
-                  Apellido materno
-                  <input type="text" [(ngModel)]="perfilEditado.apellido_materno" maxlength="80" />
                 </label>
                 <label>
                   Teléfono
@@ -123,6 +119,11 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
               </div>
             }
+            <span
+              class="etiqueta-estado"
+              [class.disponible]="producto.existencia > 0"
+              [class.no-disponible]="producto.existencia <= 0"
+            >{{ producto.existencia > 0 ? 'Disponible' : 'Agotado' }}</span>
           </div>
           <div class="info-producto">
             <h3>{{ producto.nombre }}</h3>
@@ -149,11 +150,18 @@
       </div>
       <div class="cuerpo-modal">
         <h2>{{ productoSeleccionado.nombre }}</h2>
-        <p class="precio-modal">{{ formatearPrecio(productoSeleccionado.precio) }}</p>
-        <p class="detalle">{{ productoSeleccionado.descripcion }}</p>
-        <p class="detalle">Categoría: <strong>{{ productoSeleccionado.categoria }}</strong></p>
-        <p class="detalle">Vendedor: <strong>{{ productoSeleccionado.nombre_vendedor }}</strong></p>
-        <p class="detalle">Disponibles: <strong>{{ productoSeleccionado.existencia }}</strong></p>
+        <p class="detalle"><strong>Identificador:</strong> {{ productoSeleccionado.identificador }}</p>
+        <p class="detalle"><strong>Descripción:</strong> {{ productoSeleccionado.descripcion }}</p>
+        <p class="detalle"><strong>Precio:</strong> {{ formatearPrecio(productoSeleccionado.precio) }}</p>
+        <p class="detalle"><strong>Categoría:</strong> {{ productoSeleccionado.categoria }}</p>
+        <p class="detalle"><strong>Existencia:</strong> {{ productoSeleccionado.existencia }}</p>
+        <p class="detalle"><strong>Estado:</strong>
+          <span
+            class="etiqueta-estado"
+            [class.disponible]="productoSeleccionado.existencia > 0"
+            [class.no-disponible]="productoSeleccionado.existencia <= 0"
+          >{{ productoSeleccionado.existencia > 0 ? 'Disponible' : 'No disponible' }}</span>
+        </p>
 
         @if (mensajeCarrito) {
           <p class="mensaje-carrito">{{ mensajeCarrito }}</p>
